@@ -29,7 +29,7 @@ Thư viện này một phần được dựa trên dự án [MBBank](https://pyp
     const mb = new MB({ username: "0123456789", password: "foobar" });
 
     await mb.getBalance();
-})
+})()
 ```
 
 ### Lấy lịch sử giao dịch
@@ -41,7 +41,7 @@ Thư viện này một phần được dựa trên dự án [MBBank](https://pyp
     const mb = new MB({ username: "0123456789", password: "foobar" });
 
     await mb.getTransactionHistory();
-})
+})()
 ```
 
 ## Ủng hộ

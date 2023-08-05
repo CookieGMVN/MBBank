@@ -31,7 +31,7 @@ Thư viện này một phần được dựa trên dự án [MBBank](https://pyp
     const mb = new MB({ username: "0123456789", password: "foobar" });
 
     await mb.getBalance();
-})
+})()
 ```
 
 ### Get transaction history
@@ -43,7 +43,7 @@ Thư viện này một phần được dựa trên dự án [MBBank](https://pyp
     const mb = new MB({ username: "0123456789", password: "foobar" });
 
     await mb.getTransactionHistory();
-})
+})()
 ```
 
 ## Donations
