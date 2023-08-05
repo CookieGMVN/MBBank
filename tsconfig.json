@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "incremental": false,
+        "target": "esnext",
+        "lib": [
+            "ESNext",
+            "ESNext.Promise",
+            "ESNext.AsyncIterable"
+        ],
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "module": "CommonJS",
+        "rootDir": "src",
+        "resolveJsonModule": true,
+        "moduleResolution": "node",
+        "outDir": "dist",
+        "esModuleInterop": true,
+        "strict": true,
+        "declaration": true
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "files": [
+        "src/typings/ReplaceColor.d.ts"
+    ]
+}
