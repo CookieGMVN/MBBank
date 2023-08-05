@@ -1,5 +1,4 @@
 import { Client } from "undici";
-import { EventEmitter } from "node:events";
 import { defaultHeaders, defaultTesseractConfig, generateDeviceId, getTimeNow } from "./utils/Global";
 import { recognize } from "node-tesseract-ocr";
 import { CaptchaResponse } from "./typings/MBLogin";
@@ -9,7 +8,7 @@ import { createHash } from "node:crypto";
 import { BalanceData, BalanceList, TransactionInfo } from "./typings/MBApi";
 import moment from "moment";
 
-export default class MB extends EventEmitter {
+export default class MB {
     public readonly username: string;
     public readonly password: string;
 
@@ -21,7 +20,6 @@ export default class MB extends EventEmitter {
 
     public constructor(data: { username: string, password: string }) {
         if (!data.username || !data.password) throw new Error("You must define at least a MB account to use with this library!");
-        super({ captureRejections: true });
 
         this.username = data.username;
         this.password = data.password;
