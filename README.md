@@ -46,6 +46,10 @@ Thư viện này một phần được dựa trên dự án [MBBank](https://pyp
 })
 ```
 
+## Donations
+
+If you think this is helpful for you, you can give me a cup of coffee with GitHub Sponsor link in this library GitHub repo ;)
+
 ## License
 
 MIT License

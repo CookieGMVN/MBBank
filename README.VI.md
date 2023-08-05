@@ -44,6 +44,10 @@ Thư viện này một phần được dựa trên dự án [MBBank](https://pyp
 })
 ```
 
+## Ủng hộ
+
+Nếu thư viện này hữu ích với bạn, bạn có thể ủng hộ cho mình một cốc cà phê bằng link PayPal gắn tại GitHub của thư viện này ;)
+
 ## Giấy phép
 
 Giấy phép MIT
