@@ -69,7 +69,6 @@ export default class MB {
         });
 
         captchaBuffer = await captchaImagePRCLine2.getBufferAsync(Jimp.MIME_PNG);
-        captchaImagePRCLine2.write("op.png");
 
         // Get captcha via OCR
         const captchaContent = (await recognize(captchaBuffer, defaultTesseractConfig)).replaceAll("\n", "").replaceAll(" ", "").slice(0, -1);
@@ -186,7 +185,7 @@ export default class MB {
         return balance;
     }
 
-    async getTransactionsHistory(data: { accountNumber: string, fromDate: string, toDate: string }) {
+    public async getTransactionsHistory(data: { accountNumber: string, fromDate: string, toDate: string }) {
         if (moment().day() - moment(data.fromDate, "D/M/YYYY").day() > 90 || moment().day() - moment(data.fromDate, "D/M/YYYY").day() > 90) throw new Error("Date formatting error: Max transaction history must be shorter than 90 days!");
         if (moment(data.fromDate, "DD/MM/YYYY").day() - moment(data.toDate, "D/M/YYYY").day() > 90) throw new Error("Date formatting error: Max transaction history must be shorter than 90 days!");
 

@@ -7,7 +7,8 @@
     "build": "tsc",
     "test-github": "node dist/Test.js",
     "test": "nodemon src/Test.ts -w src",
-    "doc": "typedoc"
+    "doc": "typedoc",
+    "test-local": "nodemon src/Test.local.ts"
   },
   "repository": {
     "type": "git",
