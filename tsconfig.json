@@ -15,8 +15,7 @@
         "moduleResolution": "node",
         "outDir": "dist",
         "esModuleInterop": true,
-        "strict": true,
-        "declaration": true
+        "strict": true
     },
     "include": [
         "src/**/*"

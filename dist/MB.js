@@ -4,27 +4,55 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const undici_1 = require("undici");
-const node_events_1 = require("node:events");
 const Global_1 = require("./utils/Global");
 const node_tesseract_ocr_1 = require("node-tesseract-ocr");
 const replace_color_1 = __importDefault(require("replace-color"));
 const jimp_1 = __importDefault(require("jimp"));
 const node_crypto_1 = require("node:crypto");
 const moment_1 = __importDefault(require("moment"));
-class MB extends node_events_1.EventEmitter {
+/**
+ * Main client class for all activities.
+ */
+class MB {
+    /**
+     * @readonly
+     * Your MB account username.
+    */
     username;
+    /**
+    * @readonly
+    * Your MB account password.
+    */
     password;
+    /**
+     * @private
+     * MB-returned Session ID. Use it to validate the request.
+    */
     sessionId;
+    /**
+    * @private
+    * Your non-unique, time-based Device ID.
+    */
     deviceId = (0, Global_1.generateDeviceId)();
-    userInfo = null;
+    /**
+     * Undici client. Use it for sending the request to API.
+     */
     client = new undici_1.Client("https://online.mbbank.com.vn");
+    /**
+     * Login to your MB account via username and password.
+     * @param data - Your MB Bank login credentials: username and password.
+     * @param data.username Your MB Bank login username, usually your registered phone number.
+     * @param data.password Your MB Bank login password.
+     */
     constructor(data) {
         if (!data.username || !data.password)
             throw new Error("You must define at least a MB account to use with this library!");
-        super({ captureRejections: true });
         this.username = data.username;
         this.password = data.password;
     }
+    /**
+     * A private function to process MB's captcha and get Session ID.
+     */
     async login() {
         // Request ID/Ref ID for MB
         const rId = (0, Global_1.getTimeNow)();
@@ -62,7 +90,6 @@ class MB extends node_events_1.EventEmitter {
             },
         });
         captchaBuffer = await captchaImagePRCLine2.getBufferAsync(jimp_1.default.MIME_PNG);
-        captchaImagePRCLine2.write("op.png");
         // Get captcha via OCR
         const captchaContent = (await (0, node_tesseract_ocr_1.recognize)(captchaBuffer, Global_1.defaultTesseractConfig)).replaceAll("\n", "").replaceAll(" ", "").slice(0, -1);
         const loginReq = await this.client.request({
@@ -81,7 +108,6 @@ class MB extends node_events_1.EventEmitter {
         const loginRes = await loginReq.body.json();
         if (loginRes.result.ok) {
             this.sessionId = loginRes.sessionId;
-            this.userInfo = loginRes;
         }
         else if (loginRes.result.responseCode === "GW283") {
             await this.login();
@@ -90,6 +116,10 @@ class MB extends node_events_1.EventEmitter {
             throw new Error("Login failed: (" + loginRes.result.responseCode + "): " + loginRes.result.message);
         }
     }
+    /**
+     * A private function to calculate the reference ID required by MB.
+     * @returns The reference ID that is required by MB.
+     */
     getRefNo() {
         return `${this.username}-${(0, Global_1.getTimeNow)()}`;
     }
@@ -127,6 +157,10 @@ class MB extends node_events_1.EventEmitter {
             throw new Error("Request failed (" + httpRes.result.responseCode + "): " + httpRes.result.message);
         }
     }
+    /**
+     * Gets your account's balance info.
+     * @returns Your MB account's balance object.
+     */
     async getBalance() {
         const balanceData = await this.mbRequest({ path: "/api/retail-web-accountms/getBalance" });
         if (!balanceData)
@@ -158,6 +192,20 @@ class MB extends node_events_1.EventEmitter {
         });
         return balance;
     }
+    /**
+     * Gets all your transactions on MB.
+     * @param data The data that function requires.
+     * @param data.accountNumber The MB's account number needs to be checked.
+     * @param data.fromDate The date you want to start looking up, format dd/mm/yyyy. Make sure this is not smaller than 90 days from the ending date.
+     * @param data.toDate The date you want to end the lookup, format dd/mm/yyyy. Make sure this is not bigger than 90 days from the starting date.
+     * @returns TransactionInfo object as an array, see TransactionInfo for more details.
+     *
+     * @example
+     * If you want to get transactions history from account "1234567890", from 1/12/2023 to 1/1/2024:
+     * ```ts
+     * <MB>.getTransactionsHistory({ accountNumber: "1234567890", fromDate: "1/12/2023", toDate: "1/1/2024" });
+     * ```
+     */
     async getTransactionsHistory(data) {
         if ((0, moment_1.default)().day() - (0, moment_1.default)(data.fromDate, "D/M/YYYY").day() > 90 || (0, moment_1.default)().day() - (0, moment_1.default)(data.fromDate, "D/M/YYYY").day() > 90)
             throw new Error("Date formatting error: Max transaction history must be shorter than 90 days!");

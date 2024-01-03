@@ -1,8 +1,9 @@
 {
   "name": "mbbank",
-  "version": "1.1.1",
-  "description": "An unofficial API wrapper for Vietnam Military Commercial Joint Stock Bank (MBBank, MB)",
+  "version": "1.2.0",
+  "description": "An promise-based unofficial API wrapper for Vietnam Military Commercial Joint Stock Bank (MBBank, MB)",
   "main": "dist/index.js",
+  "types": "typings/index.d.ts",
   "scripts": {
     "build": "tsc",
     "test-github": "node dist/Test.js",
@@ -24,7 +25,8 @@
   "bugs": {
     "url": "https://github.com/CookieGMVN/MBBank/issues"
   },
-  "homepage": "https://github.com/CookieGMVN/MBBank#readme",
+  "funding": "https://nhantien.momo.vn/0888929537",
+  "homepage": "https://mb-bank.vercel.app",
   "dependencies": {
     "jimp": "^0.22.10",
     "moment": "^2.29.4",

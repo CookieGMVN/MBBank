@@ -1,7 +1,8 @@
 {
     "$schema": "https://typedoc.org/schema.json",
     "name": "MBBank",
-    "entryPoints": ["./src/index.ts"],
+    "entryPoints": ["./src/MB.ts", "./src/typings"],
+    "entryPointStrategy": "expand",
     "sort": ["source-order"],
     "out": "docs"
 }

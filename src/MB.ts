@@ -8,16 +8,45 @@ import { createHash } from "node:crypto";
 import { BalanceData, BalanceList, TransactionInfo } from "./typings/MBApi";
 import moment from "moment";
 
+/**
+ * Main client class for all activities.
+ */
 export default class MB {
+    /**
+     * @readonly
+     * Your MB account username.
+    */
     public readonly username: string;
+
+    /**
+    * @readonly
+    * Your MB account password.
+    */
     public readonly password: string;
 
+    /**
+     * @private
+     * MB-returned Session ID. Use it to validate the request.
+    */
     private sessionId: string | null | undefined;
-    private deviceId: string = generateDeviceId();
-    private userInfo: any = null;
 
+    /**
+    * @private
+    * Your non-unique, time-based Device ID.
+    */
+    private deviceId: string = generateDeviceId();
+
+    /**
+     * Undici client. Use it for sending the request to API.
+     */
     public client = new Client("https://online.mbbank.com.vn");
 
+    /**
+     * Login to your MB account via username and password.
+     * @param data - Your MB Bank login credentials: username and password.
+     * @param data.username Your MB Bank login username, usually your registered phone number.
+     * @param data.password Your MB Bank login password.
+     */
     public constructor(data: { username: string, password: string }) {
         if (!data.username || !data.password) throw new Error("You must define at least a MB account to use with this library!");
 
@@ -25,6 +54,9 @@ export default class MB {
         this.password = data.password;
     }
 
+    /**
+     * A private function to process MB's captcha and get Session ID.
+     */
     private async login() {
         // Request ID/Ref ID for MB
         const rId = getTimeNow();
@@ -91,7 +123,6 @@ export default class MB {
 
         if (loginRes.result.ok) {
             this.sessionId = loginRes.sessionId;
-            this.userInfo = loginRes;
         }
         else if (loginRes.result.responseCode === "GW283") {
             await this.login();
@@ -101,6 +132,10 @@ export default class MB {
         }
     }
 
+    /**
+     * A private function to calculate the reference ID required by MB.
+     * @returns The reference ID that is required by MB.
+     */
     private getRefNo() {
         return `${this.username}-${getTimeNow()}`;
     }
@@ -145,6 +180,10 @@ export default class MB {
         }
     }
 
+    /**
+     * Gets your account's balance info.
+     * @returns Your MB account's balance object.
+     */
     public async getBalance(): Promise<BalanceList | undefined> {
         const balanceData = await this.mbRequest({ path: "/api/retail-web-accountms/getBalance" });
 
@@ -185,7 +224,21 @@ export default class MB {
         return balance;
     }
 
-    public async getTransactionsHistory(data: { accountNumber: string, fromDate: string, toDate: string }) {
+    /**
+     * Gets all your transactions on MB.
+     * @param data The data that function requires.
+     * @param data.accountNumber The MB's account number needs to be checked.
+     * @param data.fromDate The date you want to start looking up, format dd/mm/yyyy. Make sure this is not smaller than 90 days from the ending date.
+     * @param data.toDate The date you want to end the lookup, format dd/mm/yyyy. Make sure this is not bigger than 90 days from the starting date.
+     * @returns TransactionInfo object as an array, see TransactionInfo for more details.
+     *
+     * @example
+     * If you want to get transactions history from account "1234567890", from 1/12/2023 to 1/1/2024:
+     * ```ts
+     * <MB>.getTransactionsHistory({ accountNumber: "1234567890", fromDate: "1/12/2023", toDate: "1/1/2024" });
+     * ```
+     */
+    public async getTransactionsHistory(data: { accountNumber: string, fromDate: string, toDate: string }): Promise<TransactionInfo[] | undefined> {
         if (moment().day() - moment(data.fromDate, "D/M/YYYY").day() > 90 || moment().day() - moment(data.fromDate, "D/M/YYYY").day() > 90) throw new Error("Date formatting error: Max transaction history must be shorter than 90 days!");
         if (moment(data.fromDate, "DD/MM/YYYY").day() - moment(data.toDate, "D/M/YYYY").day() > 90) throw new Error("Date formatting error: Max transaction history must be shorter than 90 days!");
 

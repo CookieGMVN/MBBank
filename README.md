@@ -1,8 +1,8 @@
 # MBBank
 
-EN: An unofficial API wrapper for Vietnam Military Commercial Joint Stock Bank (MBBank, MB).
+EN: An unofficial fully promise-based API wrapper for Vietnam Military Commercial Joint Stock Bank (MBBank, MB).
 
-VN: API wrapper không chính thức dành cho Ngân hàng Quân Đội (MB). [Đọc phiên bản tiếng Việt](./README.VI.md)
+VN: Promise-based API wrapper không chính thức dành cho Ngân hàng Quân Đội (MB). [Đọc phiên bản tiếng Việt](./README.VI.md)
 
 **Warning**: For using this library, your MB account maybe suspended for malicious activities. We do not take any responsibility for your account.
 
@@ -42,13 +42,13 @@ Thư viện này một phần được dựa trên dự án [MBBank](https://pyp
     
     const mb = new MB({ username: "0123456789", password: "foobar" });
 
-    await mb.getTransactionHistory();
+    await mb.getTransactionsHistory({ accountName: "1234567890", fromDate:"dd/mm/yyyy", toDate: "dd/mm/yyyy" });
 })()
 ```
 
 ## Donations
 
-If you think this is helpful for you, you can give me a cup of coffee with GitHub Sponsor link in this library GitHub repo ;)
+If you think this is helpful for you, you can give me a cup of coffee via bank account: 0974163549 - MB - TRAN DINH TUYEN or MoMo wallet: 0888929537
 
 ## License
 
