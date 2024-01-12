@@ -129,8 +129,10 @@ class MB {
             this.mbRequest(data);
         }
         const rId = this.getRefNo();
-        const headers = Object.assign(Global_1.defaultHeaders, data.json);
+        const headers = Global_1.defaultHeaders;
         headers["X-Request-Id"] = rId;
+        headers["Deviceid"] = this.deviceId,
+            headers["Refno"] = rId;
         const defaultBody = {
             "sessionId": this.sessionId,
             "refNo": rId,
@@ -216,7 +218,7 @@ class MB {
             "fromDate": (0, moment_1.default)(data.fromDate, "D/M/YYYY").format("DD/MM/YYYY"),
             "toDate": (0, moment_1.default)(data.toDate, "D/M/YYYY").format("DD/MM/YYYY"),
         };
-        const historyData = await this.mbRequest({ path: "/retail-web-transactionservice/transaction/getTransactionAccountHistory", json: body });
+        const historyData = await this.mbRequest({ path: "/api/retail-transactionms/transactionms/get-account-transaction-history", json: body });
         if (!historyData)
             return;
         const transactionHistories = [];
