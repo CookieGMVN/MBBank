@@ -130,3 +130,5 @@ out
 
 Test.local.ts
 Test.local.js
+
+dist/

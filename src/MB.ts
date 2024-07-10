@@ -1,12 +1,39 @@
-import { Client } from "undici";
-import { defaultHeaders, defaultTesseractConfig, generateDeviceId, getTimeNow } from "./utils/Global";
-import { recognize } from "node-tesseract-ocr";
-import { CaptchaResponse } from "./typings/MBLogin";
-import replaceColor from "replace-color";
-import Jimp from "jimp";
+/*
+ * MIT License
+ *
+ * Copyright (c) 2024 CookieGMVN and contributors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import { createHash } from "node:crypto";
-import { BalanceData, BalanceList, TransactionInfo } from "./typings/MBApi";
+
+import Jimp from "jimp";
 import moment from "moment";
+import { recognize } from "node-tesseract-ocr";
+import replaceColor from "replace-color";
+import { Client } from "undici";
+
+import { BalanceData, BalanceList, TransactionInfo } from "./typings/MBApi";
+import { CaptchaResponse } from "./typings/MBLogin";
+import { defaultHeaders, defaultTesseractConfig, FPR, generateDeviceId, getTimeNow } from "./utils/Global";
+import wasmEnc from "./utils/LoadWasm";
 
 /**
  * Main client class for all activities.
@@ -41,6 +68,8 @@ export default class MB {
      */
     public client = new Client("https://online.mbbank.com.vn");
 
+    private wasmData!: Buffer;
+
     /**
      * Login to your MB account via username and password.
      * @param data - Your MB Bank login credentials: username and password.
@@ -57,7 +86,8 @@ export default class MB {
     /**
      * A private function to process MB's captcha and get Session ID.
      */
-    private async login() {
+    private async login(): Promise<boolean> {
+        if (this.sessionId) return Promise.resolve(true);
         // Request ID/Ref ID for MB
         const rId = getTimeNow();
 
@@ -66,7 +96,7 @@ export default class MB {
 
         const captchaReq = await this.client.request({
             method: "POST",
-            path: "/retail-web-internetbankingms/getCaptchaImage",
+            path: "/api/retail-web-internetbankingms/getCaptchaImage",
             headers,
             body: JSON.stringify({
                 "sessionId": "",
@@ -105,30 +135,54 @@ export default class MB {
         // Get captcha via OCR
         const captchaContent = (await recognize(captchaBuffer, defaultTesseractConfig)).replaceAll("\n", "").replaceAll(" ", "").slice(0, -1);
 
+        // wasm
+        if (!this.wasmData) {
+            const wasm = await this.client.request({
+                method: "GET",
+                path: "/assets/wasm/main.wasm",
+                headers: defaultHeaders,
+            });
+            this.wasmData = Buffer.from(await wasm.body.arrayBuffer());
+        }
+
+        // Create Data
+        const requestData = {
+            userId: this.username,
+            password: createHash("md5").update(this.password).digest("hex"),
+            captcha: captchaContent,
+            ibAuthen2faString: FPR,
+            sessionId: null,
+            refNo: getTimeNow(),
+            deviceIdCommon: this.deviceId,
+        };
+
         const loginReq = await this.client.request({
             method: "POST",
-            path: "/retail_web/internetbanking/doLogin",
+            path: "/api/retail_web/internetbanking/v2.0/doLogin",
             headers: defaultHeaders,
             body: JSON.stringify({
-                "userId": this.username,
-                "password": createHash("md5").update(this.password).digest("hex"),
-                "captcha": captchaContent,
-                "sessionId": "",
-                "refNo": getTimeNow(),
-                "deviceIdCommon": this.deviceId,
+                dataEnc: await wasmEnc(this.wasmData, requestData, "0"),
             }),
         });
 
         const loginRes = await loginReq.body.json() as any;
 
+        if (!loginRes.result) {
+            throw new Error("Login failed: Unknown data");
+        }
+
         if (loginRes.result.ok) {
             this.sessionId = loginRes.sessionId;
+            return true;
         }
         else if (loginRes.result.responseCode === "GW283") {
-            await this.login();
+            // Again...
+            return this.login();
         }
         else {
-            throw new Error("Login failed: (" + loginRes.result.responseCode + "): " + loginRes.result.message);
+            const e = new Error("Login failed: (" + loginRes.result.responseCode + "): " + loginRes.result.message) as any;
+            e.code = loginRes.result.responseCode;
+            throw e;
         }
     }
 
