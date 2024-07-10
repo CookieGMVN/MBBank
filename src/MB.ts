@@ -68,6 +68,9 @@ export default class MB {
      */
     public client = new Client("https://online.mbbank.com.vn");
 
+    /**
+     * WASM Buffer, downloaded from MB.
+     */
     private wasmData!: Buffer;
 
     /**
