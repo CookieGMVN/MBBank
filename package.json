@@ -1,6 +1,6 @@
 {
   "name": "mbbank",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "An promise-based unofficial API wrapper for Vietnam Military Commercial Joint Stock Bank (MBBank, MB)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -34,6 +34,9 @@
     "randomstring": "^1.3.0",
     "replace-color": "^2.3.0",
     "undici": "^5.23.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "devDependencies": {
     "@types/randomstring": "^1.1.11",
