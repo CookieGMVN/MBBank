@@ -28,7 +28,7 @@ import { defineConfig } from "tsup";
 
 function createTsupConfig({
     entry = ["src/index.ts"],
-    external = [],
+    external = ["src/Test.local.ts"],
     noExternal = [],
     platform = "node",
     format = ["cjs"],
