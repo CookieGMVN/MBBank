@@ -49,4 +49,4 @@ export const defaultTesseractConfig = {
     psm: 12,
 };
 
-export const FPR = "c7a1beebb9400375bb187daa33de9659"; // wtf value ???
+export const FPR = "c7a1beebb9400375bb187daa33de9659";
