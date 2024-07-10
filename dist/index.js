@@ -641,7 +641,6 @@ var MB = class {
    * A private function to process MB's captcha and get Session ID.
    */
   async login() {
-    if (this.sessionId) return Promise.resolve(true);
     const rId = getTimeNow();
     const headers = defaultHeaders;
     headers["X-Request-Id"] = rId;
