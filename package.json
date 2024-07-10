@@ -3,10 +3,10 @@
   "version": "1.4.0",
   "description": "An promise-based unofficial API wrapper for Vietnam Military Commercial Joint Stock Bank (MBBank, MB)",
   "main": "dist/index.js",
-  "types": "typings/index.d.ts",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "test-github": "node dist/Test.js",
+    "build": "tsup src/index.ts",
+    "test-github": "ts-node src/Test.ts",
     "test": "nodemon src/Test.ts -w src",
     "doc": "typedoc",
     "test-local": "nodemon src/Test.local.ts"
@@ -39,11 +39,16 @@
     "@types/randomstring": "^1.1.11",
     "@typescript-eslint/eslint-plugin": "^6.2.1",
     "@typescript-eslint/parser": "^6.2.1",
+    "esbuild-plugin-version-injector": "^1.2.1",
     "eslint": "^8.46.0",
-    "i": "^0.3.7",
+    "eslint-plugin-path-alias": "^2.1.0",
+    "eslint-plugin-simple-header": "^1.0.2",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-unused-imports": "^4.0.0",
     "nodemon": "^3.0.1",
     "npm": "^10.3.0",
     "ts-node": "^10.9.1",
+    "tsup": "^8.1.0",
     "typedoc": "^0.24.8",
     "typescript": "^5.1.6"
   }
