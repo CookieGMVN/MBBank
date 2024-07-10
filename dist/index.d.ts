@@ -56,6 +56,9 @@ declare class MB {
      * Undici client. Use it for sending the request to API.
      */
     client: Client;
+    /**
+     * WASM Buffer, downloaded from MB.
+     */
     private wasmData;
     /**
      * Login to your MB account via username and password.

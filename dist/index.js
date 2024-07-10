@@ -625,6 +625,9 @@ var MB = class {
    * Undici client. Use it for sending the request to API.
    */
   client = new import_undici.Client("https://online.mbbank.com.vn");
+  /**
+   * WASM Buffer, downloaded from MB.
+   */
   wasmData;
   /**
    * Login to your MB account via username and password.
@@ -641,7 +644,6 @@ var MB = class {
    * A private function to process MB's captcha and get Session ID.
    */
   async login() {
-    if (this.sessionId) return Promise.resolve(true);
     const rId = getTimeNow();
     const headers = defaultHeaders;
     headers["X-Request-Id"] = rId;

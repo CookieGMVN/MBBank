@@ -68,6 +68,9 @@ export default class MB {
      */
     public client = new Client("https://online.mbbank.com.vn");
 
+    /**
+     * WASM Buffer, downloaded from MB.
+     */
     private wasmData!: Buffer;
 
     /**
@@ -87,7 +90,6 @@ export default class MB {
      * A private function to process MB's captcha and get Session ID.
      */
     private async login(): Promise<boolean> {
-        if (this.sessionId) return Promise.resolve(true);
         // Request ID/Ref ID for MB
         const rId = getTimeNow();
 
