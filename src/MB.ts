@@ -308,7 +308,7 @@ export default class MB {
 
         const historyData = await this.mbRequest({ path: "/api/retail-transactionms/transactionms/get-account-transaction-history", json: body });
 
-        if (!historyData) return;
+        if (!historyData || !historyData.transactionHistoryList) return;
 
         const transactionHistories: TransactionInfo[] = [];
 
