@@ -814,7 +814,7 @@ var MB = class {
       "toDate": (0, import_moment2.default)(data.toDate, "D/M/YYYY").format("DD/MM/YYYY")
     };
     const historyData = await this.mbRequest({ path: "/api/retail-transactionms/transactionms/get-account-transaction-history", json: body });
-    if (!historyData) return;
+    if (!historyData || !historyData.transactionHistoryList) return;
     const transactionHistories = [];
     historyData.transactionHistoryList.forEach((transactionRaw) => {
       const transaction = transactionRaw;
