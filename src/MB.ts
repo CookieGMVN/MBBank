@@ -85,7 +85,7 @@ export default class MB {
      * @param data - Your MB Bank login credentials: username and password.
      * @param data.username Your MB Bank login username, usually your registered phone number.
      * @param data.password Your MB Bank login password.
-     * @param data.keyApi
+     * @param data.keyApi see more at https://ocr.space/ocrapi
      */
     public constructor(data: { username: string, password: string, keyApi?: string }) {
         if (!data.username || !data.password) throw new Error("You must define at least a MB account to use with this library!");
