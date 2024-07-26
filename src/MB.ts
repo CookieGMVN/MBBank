@@ -196,7 +196,7 @@ export default class MB {
         return `${this.username}-${getTimeNow()}`;
     }
 
-    private async mbRequest(data: { path: string, json?: object, headers?: object }) {
+    private async mbRequest(data: { path: string, json?: object, headers?: object }) : Promise<any> {
         if (!this.sessionId) {
             await this.login();
         }
