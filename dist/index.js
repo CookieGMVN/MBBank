@@ -728,7 +728,6 @@ var MB = class {
   async mbRequest(data) {
     if (!this.sessionId) {
       await this.login();
-      this.mbRequest(data);
     }
     const rId = this.getRefNo();
     const headers = defaultHeaders;
@@ -747,12 +746,12 @@ var MB = class {
       body: JSON.stringify(body)
     });
     const httpRes = await httpReq.body.json();
-    if (!httpRes.result) {
-      this.getBalance();
+    if (!httpRes || !httpRes.result) {
+      return false;
     } else if (httpRes.result.ok == true) return httpRes;
     else if (httpRes.result.responseCode === "GW200") {
       await this.login();
-      this.mbRequest(data);
+      return this.mbRequest(data);
     } else {
       throw new Error("Request failed (" + httpRes.result.responseCode + "): " + httpRes.result.message);
     }
