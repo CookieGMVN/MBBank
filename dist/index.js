@@ -607,6 +607,11 @@ var MB = class {
   */
   username;
   /**
+   * @readonly
+   * Your MB account username.
+  */
+  keyApi;
+  /**
   * @readonly
   * Your MB account password.
   */
@@ -634,9 +639,11 @@ var MB = class {
    * @param data - Your MB Bank login credentials: username and password.
    * @param data.username Your MB Bank login username, usually your registered phone number.
    * @param data.password Your MB Bank login password.
+   * @param data.keyApi see more at https://ocr.space/ocrapi
    */
   constructor(data) {
     if (!data.username || !data.password) throw new Error("You must define at least a MB account to use with this library!");
+    this.keyApi = data.keyApi;
     this.username = data.username;
     this.password = data.password;
   }
@@ -658,26 +665,12 @@ var MB = class {
       })
     });
     const captchaRes = await captchaReq.body.json();
-    let captchaBuffer = Buffer.from(captchaRes.imageString, "base64");
-    const captchaImagePRCLine1 = await (0, import_replace_color.default)({
-      image: captchaBuffer,
-      colors: {
-        type: "hex",
-        targetColor: "#847069",
-        replaceColor: "#ffffff"
-      }
-    });
-    captchaBuffer = await captchaImagePRCLine1.getBufferAsync(import_jimp.default.MIME_PNG);
-    const captchaImagePRCLine2 = await (0, import_replace_color.default)({
-      image: captchaBuffer,
-      colors: {
-        type: "hex",
-        targetColor: "#ffe3d5",
-        replaceColor: "#ffffff"
-      }
-    });
-    captchaBuffer = await captchaImagePRCLine2.getBufferAsync(import_jimp.default.MIME_PNG);
-    const captchaContent = (await (0, import_node_tesseract_ocr.recognize)(captchaBuffer, defaultTesseractConfig)).replaceAll("\n", "").replaceAll(" ", "").slice(0, -1);
+    let captchaContent = "";
+    if (this.keyApi) {
+      captchaContent = await this.solveCAPTCHAwithFreeOcrApi(captchaRes.imageString);
+    } else {
+      captchaContent = await this.solveCAPTCHAwithLocal(captchaRes.imageString);
+    }
     if (!this.wasmData) {
       const wasm = await this.client.request({
         method: "GET",
@@ -724,6 +717,52 @@ var MB = class {
    */
   getRefNo() {
     return `${this.username}-${getTimeNow()}`;
+  }
+  async solveCAPTCHAwithFreeOcrApi(base64img) {
+    const formdata = new FormData();
+    formdata.append("apikey", this.keyApi);
+    formdata.append("base64Image", "data:image/png;base64," + base64img);
+    formdata.append("language", "eng");
+    formdata.append("OCREngine", "2");
+    const requestOptions = {
+      method: "POST",
+      body: formdata,
+      redirect: "follow"
+    };
+    const ocrRes = await fetch("https://api.ocr.space/parse/image", requestOptions);
+    if (ocrRes.status !== 200) {
+      throw new Error("l\u1ED7i api");
+    }
+    const jsonData = await ocrRes.json();
+    const captchaContent = (jsonData.ParsedResults[0]?.ParsedText || "").replaceAll("\n", "").replaceAll(" ", "");
+    return captchaContent;
+  }
+  /**
+   * giải captch
+   * @returns string
+   */
+  async solveCAPTCHAwithLocal(base64img) {
+    let captchaBuffer = Buffer.from(base64img, "base64");
+    const captchaImagePRCLine1 = await (0, import_replace_color.default)({
+      image: captchaBuffer,
+      colors: {
+        type: "hex",
+        targetColor: "#847069",
+        replaceColor: "#ffffff"
+      }
+    });
+    captchaBuffer = await captchaImagePRCLine1.getBufferAsync(import_jimp.default.MIME_PNG);
+    const captchaImagePRCLine2 = await (0, import_replace_color.default)({
+      image: captchaBuffer,
+      colors: {
+        type: "hex",
+        targetColor: "#ffe3d5",
+        replaceColor: "#ffffff"
+      }
+    });
+    captchaBuffer = await captchaImagePRCLine2.getBufferAsync(import_jimp.default.MIME_PNG);
+    const captchaContent = (await (0, import_node_tesseract_ocr.recognize)(captchaBuffer, defaultTesseractConfig)).replaceAll("\n", "").replaceAll(" ", "").slice(0, -1);
+    return captchaContent;
   }
   async mbRequest(data) {
     if (!this.sessionId) {

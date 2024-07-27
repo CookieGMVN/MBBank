@@ -22,11 +22,27 @@
  * SOFTWARE.
  */
 
-import { MB } from "./index";
+// không biết chỉ copy và pase đại à
 
-(async () => {
+export interface FreeOcrRes {
+  ParsedResults: ParsedResult[];
+  OCRExitCode: number;
+  IsErroredOnProcessing: boolean;
+  ProcessingTimeInMilliseconds: string;
+  SearchablePDFURL: string;
+}
 
-    const mbBank = new MB({ username: '123456', password: 'fool', keyApi: '123456789' });
+export interface ParsedResult {
+  TextOverlay: TextOverlay;
+  TextOrientation: string;
+  FileParseExitCode: number;
+  ParsedText: string;
+  ErrorMessage: string;
+  ErrorDetails: string;
+}
 
-    console.log(await mbBank.getBalance());
-})();
+export interface TextOverlay {
+  Lines: any[];
+  HasOverlay: boolean;
+  Message: string;
+}

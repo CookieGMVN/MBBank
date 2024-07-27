@@ -38,6 +38,11 @@ declare class MB {
     */
     readonly username: string;
     /**
+     * @readonly
+     * Your MB account username.
+    */
+    readonly keyApi: string | undefined;
+    /**
     * @readonly
     * Your MB account password.
     */
@@ -65,10 +70,12 @@ declare class MB {
      * @param data - Your MB Bank login credentials: username and password.
      * @param data.username Your MB Bank login username, usually your registered phone number.
      * @param data.password Your MB Bank login password.
+     * @param data.keyApi see more at https://ocr.space/ocrapi
      */
     constructor(data: {
         username: string;
         password: string;
+        keyApi?: string;
     });
     /**
      * A private function to process MB's captcha and get Session ID.
@@ -79,6 +86,12 @@ declare class MB {
      * @returns The reference ID that is required by MB.
      */
     private getRefNo;
+    private solveCAPTCHAwithFreeOcrApi;
+    /**
+     * giải captch
+     * @returns string
+     */
+    private solveCAPTCHAwithLocal;
     private mbRequest;
     /**
      * Gets your account's balance info.
