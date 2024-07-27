@@ -196,10 +196,9 @@ export default class MB {
         return `${this.username}-${getTimeNow()}`;
     }
 
-    private async mbRequest(data: { path: string, json?: object, headers?: object }) {
+    private async mbRequest(data: { path: string, json?: object, headers?: object }) : Promise<any> {
         if (!this.sessionId) {
             await this.login();
-            this.mbRequest(data);
         }
 
         const rId = this.getRefNo();
@@ -225,13 +224,13 @@ export default class MB {
 
         const httpRes = await httpReq.body.json() as any;
 
-        if (!httpRes.result) {
-            this.getBalance();
+        if (!httpRes || !httpRes.result) {
+            return false;
         }
         else if (httpRes.result.ok == true) return httpRes;
         else if (httpRes.result.responseCode === "GW200") {
             await this.login();
-            this.mbRequest(data);
+            return this.mbRequest(data);
         }
         else {
             throw new Error("Request failed (" + httpRes.result.responseCode + "): " + httpRes.result.message);
