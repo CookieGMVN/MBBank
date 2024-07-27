@@ -26,7 +26,7 @@ import { MB } from "./index";
 
 (async () => {
 
-    const mbBank = new MB({ username: '123456', password: 'fool', keyApi: '123456789' });
+    const mbBank = new MB({ username: '123456', password: 'fool' });
 
     console.log(await mbBank.getBalance());
 })();
