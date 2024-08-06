@@ -137,6 +137,10 @@ export default class MB {
         // Get captcha via OCR
         const captchaContent = (await recognize(captchaBuffer, defaultTesseractConfig)).replaceAll("\n", "").replaceAll(" ", "").slice(0, -1);
 
+        if (captchaContent.length < 6) {
+            return this.login();
+        }
+
         // wasm
         if (!this.wasmData) {
             const wasm = await this.client.request({
