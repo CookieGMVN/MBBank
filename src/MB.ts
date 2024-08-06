@@ -137,7 +137,8 @@ export default class MB {
         // Get captcha via OCR
         const captchaContent = (await recognize(captchaBuffer, defaultTesseractConfig)).replaceAll("\n", "").replaceAll(" ", "").slice(0, -1);
 
-        if (captchaContent.length !== 6) {
+        // Check valid captcha by normal rule-base
+        if ((captchaContent.length !== 6) || !(/^[a-z0-9]+$/i.test(captchaContent))) {
             return this.login();
         }
 
