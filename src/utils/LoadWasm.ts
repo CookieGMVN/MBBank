@@ -25,6 +25,14 @@
 /* eslint-disable */
 // @ts-nocheck
 
+const window = {
+    globalThis,
+    document: {
+        welovemb: true
+    }
+};
+
+globalThis.window = window;
 globalThis.location = new URL("https://online.mbbank.com.vn/pl/login");
 
 const processAsync = (param1, param2, generatorFunction) =>
