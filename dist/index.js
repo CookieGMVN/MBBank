@@ -71,6 +71,13 @@ var defaultTesseractConfig = {
 var FPR = "c7a1beebb9400375bb187daa33de9659";
 
 // src/utils/LoadWasm.ts
+var window = {
+  globalThis,
+  document: {
+    welovemb: true
+  }
+};
+globalThis.window = window;
 globalThis.location = new URL("https://online.mbbank.com.vn/pl/login");
 var processAsync = /* @__PURE__ */ __name((param1, param2, generatorFunction) => new Promise((resolve, reject) => {
   var handleResult = /* @__PURE__ */ __name((result) => {
