@@ -735,7 +735,6 @@ var MB = class {
   async mbRequest(data) {
     if (!this.sessionId) {
       await this.login();
-      this.mbRequest(data);
     }
     const rId = this.getRefNo();
     const headers = defaultHeaders;
@@ -754,12 +753,12 @@ var MB = class {
       body: JSON.stringify(body)
     });
     const httpRes = await httpReq.body.json();
-    if (!httpRes.result) {
-      this.getBalance();
+    if (!httpRes || !httpRes.result) {
+      return false;
     } else if (httpRes.result.ok == true) return httpRes;
     else if (httpRes.result.responseCode === "GW200") {
       await this.login();
-      this.mbRequest(data);
+      return this.mbRequest(data);
     } else {
       throw new Error("Request failed (" + httpRes.result.responseCode + "): " + httpRes.result.message);
     }
@@ -821,7 +820,7 @@ var MB = class {
       "toDate": (0, import_moment2.default)(data.toDate, "D/M/YYYY").format("DD/MM/YYYY")
     };
     const historyData = await this.mbRequest({ path: "/api/retail-transactionms/transactionms/get-account-transaction-history", json: body });
-    if (!historyData) return;
+    if (!historyData || !historyData.transactionHistoryList) return;
     const transactionHistories = [];
     historyData.transactionHistoryList.forEach((transactionRaw) => {
       const transaction = transactionRaw;
