@@ -107,6 +107,10 @@ new MB({
 })();
 ```
 
+## Ghi công Model OCR
+
+Mặc dù dataset là do tôi thu thập (và nó ở trên [Kaggle](https://www.kaggle.com/datasets/cookiegmvn/mbbank-captcha-images)), nhưng mô hình OCR thì được huấn luyện bởi [The DT](https://github.com/thedtvn). Mô hình và code để huấn luyện có sẵn tại [GitHub repository này](https://github.com/thedtvn/mbbank-capcha-ocr).
+
 ## Ủng hộ
 
 Nếu thư viện này hữu ích với bạn, bạn có thể ủng hộ cho mình một cốc cà phê bằng STK 0974163549 - MB - TRAN DINH TUYEN hoặc MoMo: 0888929537
