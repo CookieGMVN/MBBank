@@ -37,13 +37,11 @@ module.exports = __toCommonJS(src_exports);
 
 // src/MB.ts
 var import_node_crypto = require("crypto");
-var import_jimp = __toESM(require("jimp"));
 var import_moment2 = __toESM(require("moment"));
-var import_node_tesseract_ocr = require("node-tesseract-ocr");
-var import_replace_color = __toESM(require("replace-color"));
-var import_undici = require("undici");
+var import_undici3 = require("undici");
 
 // src/utils/Global.ts
+var import_jimp = __toESM(require("jimp"));
 var import_moment = __toESM(require("moment"));
 function getTimeNow() {
   return (0, import_moment.default)().format("YYYYMMDDHHmmss" + (0, import_moment.default)().millisecond().toString().slice(0, -1));
@@ -69,6 +67,73 @@ var defaultTesseractConfig = {
   psm: 12
 };
 var FPR = "c7a1beebb9400375bb187daa33de9659";
+async function replaceColor({
+  image,
+  target,
+  replace,
+  tolerance = 0
+}) {
+  try {
+    const jimpImage = await import_jimp.default.read(image);
+    const targetHex = target.startsWith("#") ? target.substring(1) : target;
+    const replaceHex = replace.startsWith("#") ? replace.substring(1) : replace;
+    const targetR = parseInt(targetHex.substring(0, 2), 16);
+    const targetG = parseInt(targetHex.substring(2, 4), 16);
+    const targetB = parseInt(targetHex.substring(4, 6), 16);
+    const replaceR = parseInt(replaceHex.substring(0, 2), 16);
+    const replaceG = parseInt(replaceHex.substring(2, 4), 16);
+    const replaceB = parseInt(replaceHex.substring(4, 6), 16);
+    const maxDiff = 255 * Math.min(tolerance / 100, 1);
+    jimpImage.scan(0, 0, jimpImage.getWidth(), jimpImage.getHeight(), function(x, y, idx) {
+      const r = this.bitmap.data[idx + 0];
+      const g = this.bitmap.data[idx + 1];
+      const b = this.bitmap.data[idx + 2];
+      const colorDiff = Math.sqrt(
+        Math.pow(r - targetR, 2) + Math.pow(g - targetG, 2) + Math.pow(b - targetB, 2)
+      );
+      if (colorDiff <= maxDiff) {
+        this.bitmap.data[idx + 0] = replaceR;
+        this.bitmap.data[idx + 1] = replaceG;
+        this.bitmap.data[idx + 2] = replaceB;
+      }
+    });
+    return await jimpImage.getBufferAsync(import_jimp.default.MIME_PNG);
+  } catch (error) {
+    console.error("Error in replaceColor:", error);
+    throw new Error(`Failed to process image: ${error.message}`);
+  }
+}
+__name(replaceColor, "replaceColor");
+async function cutBorder({
+  image,
+  borderWidth = 5
+}) {
+  try {
+    const jimpImage = await import_jimp.default.read(image);
+    const originalWidth = jimpImage.getWidth();
+    const originalHeight = jimpImage.getHeight();
+    if (originalWidth <= 2 * borderWidth || originalHeight <= 2 * borderWidth) {
+      throw new Error("Image is too small to cut the specified border width");
+    }
+    const newWidth = originalWidth - 2 * borderWidth;
+    const newHeight = originalHeight - 2 * borderWidth;
+    const croppedImage = jimpImage.crop(
+      borderWidth,
+      // x position (left)
+      borderWidth,
+      // y position (top)
+      newWidth,
+      // width
+      newHeight
+      // height
+    );
+    return await croppedImage.getBufferAsync(import_jimp.default.MIME_PNG);
+  } catch (error) {
+    console.error("Error in cutBorder:", error);
+    throw new Error(`Failed to process image: ${error.message}`);
+  }
+}
+__name(cutBorder, "cutBorder");
 
 // src/utils/LoadWasm.ts
 var window = {
@@ -603,52 +668,472 @@ function LoadWasm_default(wasmBytes, requestData, args1) {
 }
 __name(LoadWasm_default, "default");
 
+// src/utils/Tesseract.ts
+var import_node_tesseract_ocr = require("node-tesseract-ocr");
+var TesseractUtils = class {
+  static {
+    __name(this, "TesseractUtils");
+  }
+  /**
+   * Cleans a captcha image to improve OCR recognition accuracy
+   * 
+   * @param {Buffer} image - The raw captcha image buffer
+   * @returns {Promise<Buffer>} A promise that resolves to the cleaned image buffer
+   * 
+   * @example
+   * ```typescript
+   * // Clean captcha image for better OCR recognition
+   * const rawImage = fs.readFileSync('./captcha.png');
+   * const cleanedImage = await TesseractUtils.cleanImage(rawImage);
+   * ```
+   */
+  static async cleanImage(image) {
+    image = await replaceColor({
+      image,
+      target: "#857069",
+      replace: "#ffffff"
+    });
+    image = await replaceColor({
+      image,
+      target: "#ffe4d6",
+      replace: "#ffffff"
+    });
+    image = await cutBorder({
+      image,
+      borderWidth: 1
+    });
+    return image;
+  }
+  /**
+   * Recognizes text from a captcha image using Tesseract OCR
+   * 
+   * @param {Buffer} image - The captcha image buffer to process
+   * @returns {Promise<string|null>} A promise that resolves to the recognized text, or null if recognition failed
+   * 
+   * @example
+   * ```typescript
+   * // Recognize text from a captcha image
+   * const captchaImage = fs.readFileSync('./captcha.png');
+   * const recognizedText = await TesseractUtils.recognizeText(captchaImage);
+   * 
+   * if (recognizedText) {
+   *   console.log('Captcha text:', recognizedText);
+   * } else {
+   *   console.log('Failed to recognize captcha');
+   * }
+   * ```
+   */
+  static async recognizeText(image) {
+    image = await this.cleanImage(image);
+    const captchaContent = await (0, import_node_tesseract_ocr.recognize)(image, defaultTesseractConfig);
+    captchaContent.replaceAll("\n", "");
+    captchaContent.replaceAll(" ", "");
+    captchaContent.slice(0, -1);
+    if (captchaContent.length !== 6 || !/^[a-z0-9]+$/i.test(captchaContent)) {
+      return null;
+    }
+    return captchaContent;
+  }
+};
+
+// src/utils/OCRModel.ts
+var path = __toESM(require("path"));
+var ort = __toESM(require("onnxruntime-node"));
+var import_sharp = __toESM(require("sharp"));
+var import_undici = require("undici");
+var import_fs = require("fs");
+var dirPath = path.dirname(require.main ? require.main.filename : __filename);
+var OCRModel = class {
+  static {
+    __name(this, "OCRModel");
+  }
+  /**
+   * Character set for recognition
+   * @private
+   * @type {string[]}
+   */
+  chars;
+  /**
+   * Path to the ONNX model file
+   * @private
+   * @type {string}
+   */
+  modelPath;
+  /**
+   * ONNX inference session
+   * @private
+   * @type {ort.InferenceSession}
+   */
+  session;
+  /**
+   * Creates a new OCR model
+   * @param {string|null} modelPath - Optional custom path to the ONNX model file
+   */
+  constructor(modelPath = null) {
+    this.chars = [];
+    for (let i = 0; i < 10; i++) {
+      this.chars.push(String(i));
+    }
+    for (let i = 97; i <= 122; i++) {
+      this.chars.push(String.fromCharCode(i));
+    }
+    for (let i = 65; i <= 90; i++) {
+      this.chars.push(String.fromCharCode(i));
+    }
+    this.chars.sort();
+    this.modelPath = modelPath || path.join(dirPath, "/../model.onnx");
+  }
+  /**
+   * Loads the ONNX model for inference
+   * @returns {Promise<void>} A promise that resolves when the model is loaded
+   */
+  async loadModel() {
+    if (!(0, import_fs.existsSync)(this.modelPath)) await this.downloadOnnxModel();
+    this.session = await ort.InferenceSession.create(this.modelPath);
+  }
+  /**
+   * Predicts text from an image
+   * @param {Buffer} imageBuffer - The image buffer to process
+   * @returns {Promise<string>} A promise that resolves to the recognized text
+   */
+  async predict(imageBuffer) {
+    const processedImage = await (0, import_sharp.default)(imageBuffer).grayscale().resize(160, 50).raw().toBuffer();
+    const imageArray = new Float32Array(processedImage.length);
+    for (let i = 0; i < processedImage.length; i++) {
+      imageArray[i] = processedImage[i] / 255;
+    }
+    const tensor = new ort.Tensor("float32", imageArray, [1, 1, 50, 160]);
+    const inputName = this.session.inputNames[0];
+    const feeds = {};
+    feeds[inputName] = tensor;
+    const results = await this.session.run(feeds);
+    const outputData = Object.values(results)[0].data;
+    const outputShape = Object.values(results)[0].dims;
+    const pred = this.reshapeTensor(outputData, outputShape);
+    const predLabels = this.argmax(pred, 2);
+    let predText = "";
+    for (const label of predLabels[0]) {
+      if (label >= 0 && label < this.chars.length) {
+        predText += this.chars[label];
+      }
+    }
+    return predText;
+  }
+  /**
+   * Downloads the ONNX model from GitHub
+   * @private
+   * @returns {Promise<void>} A promise that resolves when the model is downloaded
+   * @throws {Error} If the download fails
+   */
+  async downloadOnnxModel() {
+    try {
+      const model = await (0, import_undici.request)("https://github.com/thedtvn/mbbank-capcha-ocr/raw/refs/heads/master/mb_capcha_ocr/model.onnx", {
+        maxRedirections: 10,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+      });
+      const fileStream = (0, import_fs.createWriteStream)(this.modelPath);
+      await new Promise((resolve, reject) => {
+        model.body.pipe(fileStream);
+        model.body.on("error", (err) => {
+          reject(err);
+        });
+        fileStream.on("finish", () => {
+          resolve();
+        });
+        fileStream.on("error", (err) => {
+          reject(err);
+        });
+      });
+    } catch (error) {
+      console.error("Error downloading model:", error);
+      throw error;
+    }
+  }
+  /**
+   * Reshapes a flat tensor into a 3D array
+   * @private
+   * @param {Float32Array} data - The flat tensor data
+   * @param {number[]} shape - The target shape [batchSize, seqLength, numClasses]
+   * @returns {number[][][]} Reshaped 3D array
+   */
+  reshapeTensor(data, shape) {
+    const result = [];
+    const [batchSize, seqLength, numClasses] = shape;
+    for (let b = 0; b < batchSize; b++) {
+      const batchResult = [];
+      for (let s = 0; s < seqLength; s++) {
+        const classProbs = [];
+        for (let c = 0; c < numClasses; c++) {
+          const idx = b * seqLength * numClasses + s * numClasses + c;
+          classProbs.push(data[idx]);
+        }
+        batchResult.push(classProbs);
+      }
+      result.push(batchResult);
+    }
+    return result;
+  }
+  /**
+   * Computes argmax along a specified axis
+   * @private
+   * @param {number[][][]} tensor - The input tensor
+   * @param {number} axis - The axis along which to compute argmax (only 2 is supported)
+   * @returns {number[][]} The indices of maximum values
+   */
+  argmax(tensor, axis) {
+    const result = [];
+    if (axis === 2) {
+      for (let b = 0; b < tensor.length; b++) {
+        const batchResult = [];
+        for (let s = 0; s < tensor[b].length; s++) {
+          let maxIdx = 0;
+          let maxVal = tensor[b][s][0];
+          for (let c = 1; c < tensor[b][s].length; c++) {
+            if (tensor[b][s][c] > maxVal) {
+              maxVal = tensor[b][s][c];
+              maxIdx = c;
+            }
+          }
+          batchResult.push(maxIdx);
+        }
+        result.push(batchResult);
+      }
+    }
+    return result;
+  }
+};
+
+// src/utils/Wasm.ts
+var import_undici2 = require("undici");
+var import_fs2 = require("fs");
+var WasmUtils = class {
+  static {
+    __name(this, "WasmUtils");
+  }
+  /**
+   * Downloads the WebAssembly binary from MB Bank's website
+   * 
+   * @returns {Promise<Buffer>} A promise that resolves to the WebAssembly binary buffer
+   * 
+   * @example
+   * ```typescript
+   * const wasmBinary = await WasmUtils.downloadWasm();
+   * // Use the WebAssembly binary for encryption
+   * ```
+   */
+  static async downloadWasm() {
+    const wasm = await (0, import_undici2.request)("https://online.mbbank.com.vn/assets/wasm/main.wasm");
+    return Buffer.from(await wasm.body.arrayBuffer());
+  }
+  /**
+   * Loads WebAssembly binary, either by downloading it or retrieving from disk
+   * 
+   * @param {string} [path] - Optional path to save/load the WebAssembly file
+   * @returns {Promise<Buffer>} A promise that resolves to the WebAssembly binary buffer
+   * 
+   * @example
+   * ```typescript
+   * // Download the WASM file each time
+   * const wasmData = await WasmUtils.loadWasm();
+   * 
+   * // Or save/load it from disk for caching
+   * const wasmData = await WasmUtils.loadWasm('./cache/main.wasm');
+   * ```
+   */
+  static async loadWasm(path2) {
+    if (!path2) {
+      return this.downloadWasm();
+    }
+    if (!(0, import_fs2.existsSync)(path2)) {
+      const wasm = await this.downloadWasm();
+      (0, import_fs2.writeFileSync)(path2, wasm, { encoding: "binary" });
+      return wasm;
+    }
+    return Buffer.from((0, import_fs2.readFileSync)(path2, "binary"), "binary");
+  }
+};
+
 // src/MB.ts
 var MB = class {
   static {
     __name(this, "MB");
   }
   /**
+   * MB Bank account username (usually phone number).
    * @readonly
-   * Your MB account username.
-  */
+   * @type {string}
+   */
   username;
   /**
-  * @readonly
-  * Your MB account password.
-  */
+   * MB Bank account password.
+   * @readonly
+   * @type {string}
+   */
   password;
   /**
-   * @private
-   * MB-returned Session ID. Use it to validate the request.
-  */
+   * Session identifier returned by MB Bank's API after successful authentication.
+   * Used to validate subsequent requests.
+   * @type {string|null|undefined}
+   */
   sessionId;
   /**
-  * @private
-  * Your non-unique, time-based Device ID.
-  */
+   * Device identifier used for authentication with MB Bank API.
+   * This is automatically generated for each session.
+   * @type {string}
+   */
   deviceId = generateDeviceId();
   /**
-   * Undici client. Use it for sending the request to API.
+   * HTTP client for making requests to MB Bank's API.
+   * @type {Client}
    */
-  client = new import_undici.Client("https://online.mbbank.com.vn");
+  client = new import_undici3.Client("https://online.mbbank.com.vn");
   /**
-   * WASM Buffer, downloaded from MB.
+   * WASM binary data downloaded from MB Bank.
+   * Used for request encryption.
+   * @private
+   * @type {Buffer}
    */
   wasmData;
   /**
-   * Login to your MB account via username and password.
-   * @param data - Your MB Bank login credentials: username and password.
-   * @param data.username Your MB Bank login username, usually your registered phone number.
-   * @param data.password Your MB Bank login password.
+   * Custom OCR function for captcha recognition.
+   * Allows implementing your own captcha recognition logic.
+   * 
+   * @private
+   * @type {Function|undefined}
+   * @param {Buffer} image - The captcha image buffer to be recognized
+   * @returns {Promise<string>} Recognized text from the captcha
+   * 
+   * @example
+   * ```typescript
+   * const mb = new MB({
+   *   username: '0123456789',
+   *   password: 'your_password',
+   *   preferredOCRMethod: 'custom',
+   *   customOCRFunction: async (imageBuffer) => {
+   *     // Your custom OCR logic here
+   *     // For example, using a third-party OCR service:
+   *     const result = await someOCRService.recognize(imageBuffer);
+   *     return result.text;
+   *   }
+   * });
+   * ```
+   */
+  customOCRFunction;
+  /**
+   * The OCR method to use for captcha recognition.
+   * - "default": Uses the pre-trained OCR model (recommended)
+   * - "tesseract": Uses Tesseract OCR engine
+   * - "custom": Uses the custom OCR function provided
+   * 
+   * @private
+   * @type {"default"|"tesseract"|"custom"}
+   * @default "default"
+   */
+  preferredOCRMethod = "default";
+  /**
+   * Whether to save the WASM file to disk.
+   * Useful for debugging or caching purposes.
+   * 
+   * @private
+   * @type {boolean}
+   * @default false
+   */
+  saveWasm = false;
+  /**
+   * Creates a new MB client instance.
+   * 
+   * @param {Object} data - Configuration options
+   * @param {string} data.username - MB Bank login username (usually your registered phone number)
+   * @param {string} data.password - MB Bank login password
+   * @param {"default"|"tesseract"|"custom"} [data.preferredOCRMethod="default"] - OCR method for captcha recognition
+   * @param {Function} [data.customOCRFunction] - Custom OCR function (required if preferredOCRMethod is "custom")
+   * @param {boolean} [data.saveWasm=false] - Whether to save the WASM file to disk
+   * 
+   * @throws {Error} If username or password is not provided
+   * 
+   * @example
+   * ```typescript
+   * // Basic usage with default OCR
+   * const mbClient = new MB({
+   *   username: '0123456789',
+   *   password: 'your_password'
+   * });
+   * 
+   * // Using Tesseract OCR
+   * const mbWithTesseract = new MB({
+   *   username: '0123456789',
+   *   password: 'your_password',
+   *   preferredOCRMethod: 'tesseract'
+   * });
+   * 
+   * // Using custom OCR function
+   * const mbWithCustomOCR = new MB({
+   *   username: '0123456789',
+   *   password: 'your_password',
+   *   preferredOCRMethod: 'custom',
+   *   customOCRFunction: async (image) => {
+   *     // Your custom captcha recognition logic
+   *     return recognizedText;
+   *   }
+   * });
+   * ```
    */
   constructor(data) {
     if (!data.username || !data.password) throw new Error("You must define at least a MB account to use with this library!");
     this.username = data.username;
     this.password = data.password;
+    if (data.preferredOCRMethod) this.preferredOCRMethod = data.preferredOCRMethod;
+    if (data.customOCRFunction) this.customOCRFunction = data.customOCRFunction;
+    if (data.saveWasm) this.saveWasm = data.saveWasm;
   }
   /**
-   * A private function to process MB's captcha and get Session ID.
+   * Processes captcha image according to the configured OCR method.
+   * 
+   * @private
+   * @param {Buffer} image - Captcha image buffer
+   * @returns {Promise<string|null>} Recognized captcha text or null if recognition failed
+   */
+  async recognizeCaptcha(image) {
+    switch (this.preferredOCRMethod) {
+      case "default":
+        const model = new OCRModel();
+        await model.loadModel();
+        const modelPredictedCaptcha = await model.predict(image);
+        if (modelPredictedCaptcha.length !== 6) return null;
+        return modelPredictedCaptcha;
+      case "tesseract":
+        return await TesseractUtils.recognizeText(image);
+      case "custom":
+        if (!this.customOCRFunction) return null;
+        const customPredictedCaptcha = await this.customOCRFunction(image);
+        if (customPredictedCaptcha.length !== 6) return null;
+        return customPredictedCaptcha;
+    }
+  }
+  /**
+   * Authenticates with MB Bank API by solving captcha and sending login credentials.
+   * Sets the session ID upon successful login.
+   * 
+   * @returns {Promise<LoginResponseData>} Login response from the API
+   * @throws {Error} If login fails with specific error code and message
+   * 
+   * @example
+   * ```typescript
+   * const mb = new MB({
+   *   username: '0123456789',
+   *   password: 'your_password'
+   * });
+   * 
+   * try {
+   *   const loginResponse = await mb.login();
+   *   console.log('Login successful!');
+   *   console.log('Session ID:', mb.sessionId);
+   * } catch (error) {
+   *   console.error('Login failed:', error.message);
+   * }
+   * ```
    */
   async login() {
     const rId = getTimeNow();
@@ -666,32 +1151,10 @@ var MB = class {
     });
     const captchaRes = await captchaReq.body.json();
     let captchaBuffer = Buffer.from(captchaRes.imageString, "base64");
-    const captchaImagePRCLine1 = await (0, import_replace_color.default)({
-      image: captchaBuffer,
-      colors: {
-        type: "hex",
-        targetColor: "#847069",
-        replaceColor: "#ffffff"
-      }
-    });
-    captchaBuffer = await captchaImagePRCLine1.getBufferAsync(import_jimp.default.MIME_PNG);
-    const captchaImagePRCLine2 = await (0, import_replace_color.default)({
-      image: captchaBuffer,
-      colors: {
-        type: "hex",
-        targetColor: "#ffe3d5",
-        replaceColor: "#ffffff"
-      }
-    });
-    captchaBuffer = await captchaImagePRCLine2.getBufferAsync(import_jimp.default.MIME_PNG);
-    const captchaContent = (await (0, import_node_tesseract_ocr.recognize)(captchaBuffer, defaultTesseractConfig)).replaceAll("\n", "").replaceAll(" ", "").slice(0, -1);
+    const captchaContent = await this.recognizeCaptcha(captchaBuffer);
+    if (captchaContent === null) return this.login();
     if (!this.wasmData) {
-      const wasm = await this.client.request({
-        method: "GET",
-        path: "/assets/wasm/main.wasm",
-        headers: defaultHeaders
-      });
-      this.wasmData = Buffer.from(await wasm.body.arrayBuffer());
+      this.wasmData = await WasmUtils.loadWasm(this.saveWasm ? "main.wasm" : void 0);
     }
     const requestData = {
       userId: this.username,
@@ -716,7 +1179,7 @@ var MB = class {
     }
     if (loginRes.result.ok) {
       this.sessionId = loginRes.sessionId;
-      return true;
+      return loginRes;
     } else if (loginRes.result.responseCode === "GW283") {
       return this.login();
     } else {
@@ -726,12 +1189,27 @@ var MB = class {
     }
   }
   /**
-   * A private function to calculate the reference ID required by MB.
-   * @returns The reference ID that is required by MB.
+   * Generates a reference ID required by MB Bank API.
+   * The format is "{username}-{timestamp}".
+   * 
+   * @private
+   * @returns {string} Reference ID for API requests
    */
   getRefNo() {
     return `${this.username}-${getTimeNow()}`;
   }
+  /**
+   * Makes an authenticated request to MB Bank API.
+   * Handles session expiration by automatically re-logging in.
+   * 
+   * @private
+   * @param {Object} data - Request parameters
+   * @param {string} data.path - API endpoint path
+   * @param {Object} [data.json] - Request body data
+   * @param {Object} [data.headers] - Additional request headers
+   * @returns {Promise<any>} API response
+   * @throws {Error} If the request fails with error code and message
+   */
   async mbRequest(data) {
     if (!this.sessionId) {
       await this.login();
@@ -764,8 +1242,35 @@ var MB = class {
     }
   }
   /**
-   * Gets your account's balance info.
-   * @returns Your MB account's balance object.
+   * Retrieves account balance information for all accounts.
+   * 
+   * @returns {Promise<BalanceList|undefined>} Account balance data or undefined if request fails
+   * 
+   * @example
+   * ```typescript
+   * const mb = new MB({
+   *   username: '0123456789',
+   *   password: 'your_password'
+   * });
+   * 
+   * async function getAccountInfo() {
+   *   await mb.login();
+   *   const balanceInfo = await mb.getBalance();
+   *   
+   *   if (balanceInfo) {
+   *     console.log(`Total balance: ${balanceInfo.totalBalance} ${balanceInfo.currencyEquivalent}`);
+   *     
+   *     // Display each account's details
+   *     balanceInfo.balances.forEach(account => {
+   *       console.log(`Account: ${account.name} (${account.number})`);
+   *       console.log(`Balance: ${account.balance} ${account.currency}`);
+   *       console.log('---');
+   *     });
+   *   }
+   * }
+   * 
+   * getAccountInfo().catch(console.error);
+   * ```
    */
   async getBalance() {
     const balanceData = await this.mbRequest({ path: "/api/retail-web-accountms/getBalance" });
@@ -798,17 +1303,66 @@ var MB = class {
     return balance;
   }
   /**
-   * Gets all your transactions on MB.
-   * @param data The data that function requires.
-   * @param data.accountNumber The MB's account number needs to be checked.
-   * @param data.fromDate The date you want to start looking up, format dd/mm/yyyy. Make sure this is not smaller than 90 days from the ending date.
-   * @param data.toDate The date you want to end the lookup, format dd/mm/yyyy. Make sure this is not bigger than 90 days from the starting date.
-   * @returns TransactionInfo object as an array, see TransactionInfo for more details.
-   *
+   * Retrieves transaction history for a specific account within a date range.
+   * 
+   * @param {Object} data - Request parameters
+   * @param {string} data.accountNumber - MB Bank account number to query
+   * @param {string} data.fromDate - Start date in format "DD/MM/YYYY" or "D/M/YYYY"
+   * @param {string} data.toDate - End date in format "DD/MM/YYYY" or "D/M/YYYY"
+   * @returns {Promise<TransactionInfo[]|undefined>} Array of transaction details or undefined if request fails
+   * @throws {Error} If date range exceeds 90 days or date format is invalid
+   * 
    * @example
-   * If you want to get transactions history from account "1234567890", from 1/12/2023 to 1/1/2024:
-   * ```ts
-   * <MB>.getTransactionsHistory({ accountNumber: "1234567890", fromDate: "1/12/2023", toDate: "1/1/2024" });
+   * ```typescript
+   * const mb = new MB({
+   *   username: '0123456789',
+   *   password: 'your_password'
+   * });
+   * 
+   * async function getLastMonthTransactions() {
+   *   await mb.login();
+   *   
+   *   // Get account first
+   *   const balanceInfo = await mb.getBalance();
+   *   if (!balanceInfo?.balances?.length) {
+   *     console.log('No accounts found');
+   *     return;
+   *   }
+   *   
+   *   const accountNumber = balanceInfo.balances[0].number;
+   *   
+   *   // Get transactions for the last 30 days
+   *   const today = new Date();
+   *   const lastMonth = new Date();
+   *   lastMonth.setDate(today.getDate() - 30);
+   *   
+   *   const fromDate = `${lastMonth.getDate()}/${lastMonth.getMonth() + 1}/${lastMonth.getFullYear()}`;
+   *   const toDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+   *   
+   *   const transactions = await mb.getTransactionsHistory({
+   *     accountNumber,
+   *     fromDate,
+   *     toDate
+   *   });
+   *   
+   *   if (transactions) {
+   *     console.log(`Found ${transactions.length} transactions`);
+   *     
+   *     transactions.forEach(tx => {
+   *       const amount = tx.creditAmount || tx.debitAmount;
+   *       const type = tx.creditAmount ? 'CREDIT' : 'DEBIT';
+   *       
+   *       console.log(`${tx.transactionDate} | ${type} | ${amount} ${tx.transactionCurrency}`);
+   *       console.log(`Description: ${tx.transactionDesc}`);
+   *       if (tx.toAccountName) {
+   *         console.log(`To: ${tx.toAccountName} (${tx.toAccountNumber}) at ${tx.toBank}`);
+   *       }
+   *       console.log('---');
+   *     });
+   *   }
+   * }
+   * 
+   * getLastMonthTransactions().catch(console.error);
    * ```
    */
   async getTransactionsHistory(data) {

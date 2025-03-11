@@ -31,8 +31,9 @@
     "jimp": "^0.22.10",
     "moment": "^2.29.4",
     "node-tesseract-ocr": "^2.2.1",
+    "onnxruntime-node": "^1.21.0",
     "randomstring": "^1.3.0",
-    "replace-color": "^2.3.0",
+    "sharp": "^0.33.5",
     "undici": "^5.23.0"
   },
   "engines": {

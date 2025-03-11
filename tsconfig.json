@@ -15,12 +15,10 @@
         "moduleResolution": "node",
         "outDir": "dist",
         "esModuleInterop": true,
-        "strict": true
+        "strict": true,
+        "skipLibCheck": true
     },
     "include": [
         "src/**/*"
-    ],
-    "files": [
-        "src/typings/ReplaceColor.d.ts"
     ]
 }

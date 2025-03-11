@@ -25,5 +25,19 @@
 import { MB } from "./index";
 
 (async () => {
-    console.log(MB);
+    const mb = new MB({
+        username: "0123456789",
+        password: "ABCXYZ@@",
+        preferredOCRMethod: "default",
+        saveWasm: true,
+    });
+
+    try {
+        await mb.login();
+    } catch (e) {
+        const errorMsg = (e as Error).message;
+
+        if (errorMsg.includes("GW18")) return console.log("Test completed. The library is functioning correctly.");
+        else throw e;
+    }
 })();

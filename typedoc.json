@@ -4,5 +4,9 @@
     "entryPoints": ["./src/MB.ts", "./src/typings", "./src/utils"],
     "entryPointStrategy": "expand",
     "sort": ["source-order"],
-    "out": "docs"
+    "out": "docs",
+    "excludeExternals": true,
+    "externalPattern": [
+        "**/node_modules/**"
+    ]
 }
