@@ -29,16 +29,16 @@ import { Client } from "undici";
 
 import { BalanceData, BalanceList, LoginResponseData, TransactionInfo } from "./typings/MBApi";
 import { CaptchaResponse } from "./typings/MBLogin";
-import { defaultHeaders, defaultTesseractConfig, FPR, generateDeviceId, getTimeNow } from "./utils/Global";
+import { defaultHeaders, FPR, generateDeviceId, getTimeNow } from "./utils/Global";
 import wasmEnc from "./utils/LoadWasm";
-import TesseractUtils from "./utils/Tesseract";
 import OCRModel from "./utils/OCRModel";
+import TesseractUtils from "./utils/Tesseract";
 import WasmUtils from "./utils/Wasm";
 
 /**
  * Main client class for MB Bank API integration.
  * Provides functionality for authentication, account balance queries, and transaction history.
- * 
+ *
  * @example
  * ```typescript
  * // Initialize the MB client
@@ -46,7 +46,7 @@ import WasmUtils from "./utils/Wasm";
  *   username: '0123456789',   // Your MB Bank phone number
  *   password: 'your_password' // Your MB Bank password
  * });
- * 
+ *
  * // Login and get account balance
  * async function checkBalance() {
  *   await mb.login();
@@ -54,7 +54,7 @@ import WasmUtils from "./utils/Wasm";
  *   console.log('Total balance:', balance.totalBalance);
  *   console.log('Accounts:', balance.balances);
  * }
- * 
+ *
  * checkBalance().catch(console.error);
  * ```
  */
@@ -104,12 +104,12 @@ export default class MB {
     /**
      * Custom OCR function for captcha recognition.
      * Allows implementing your own captcha recognition logic.
-     * 
+     *
      * @private
      * @type {Function|undefined}
      * @param {Buffer} image - The captcha image buffer to be recognized
      * @returns {Promise<string>} Recognized text from the captcha
-     * 
+     *
      * @example
      * ```typescript
      * const mb = new MB({
@@ -132,7 +132,7 @@ export default class MB {
      * - "default": Uses the pre-trained OCR model (recommended)
      * - "tesseract": Uses Tesseract OCR engine
      * - "custom": Uses the custom OCR function provided
-     * 
+     *
      * @private
      * @type {"default"|"tesseract"|"custom"}
      * @default "default"
@@ -142,7 +142,7 @@ export default class MB {
     /**
      * Whether to save the WASM file to disk.
      * Useful for debugging or caching purposes.
-     * 
+     *
      * @private
      * @type {boolean}
      * @default false
@@ -151,16 +151,16 @@ export default class MB {
 
     /**
      * Creates a new MB client instance.
-     * 
+     *
      * @param {Object} data - Configuration options
      * @param {string} data.username - MB Bank login username (usually your registered phone number)
      * @param {string} data.password - MB Bank login password
      * @param {"default"|"tesseract"|"custom"} [data.preferredOCRMethod="default"] - OCR method for captcha recognition
      * @param {Function} [data.customOCRFunction] - Custom OCR function (required if preferredOCRMethod is "custom")
      * @param {boolean} [data.saveWasm=false] - Whether to save the WASM file to disk
-     * 
+     *
      * @throws {Error} If username or password is not provided
-     * 
+     *
      * @example
      * ```typescript
      * // Basic usage with default OCR
@@ -168,14 +168,14 @@ export default class MB {
      *   username: '0123456789',
      *   password: 'your_password'
      * });
-     * 
+     *
      * // Using Tesseract OCR
      * const mbWithTesseract = new MB({
      *   username: '0123456789',
      *   password: 'your_password',
      *   preferredOCRMethod: 'tesseract'
      * });
-     * 
+     *
      * // Using custom OCR function
      * const mbWithCustomOCR = new MB({
      *   username: '0123456789',
@@ -188,12 +188,12 @@ export default class MB {
      * });
      * ```
      */
-    public constructor(data: { 
-        username: string, 
-        password: string, 
-        preferredOCRMethod?: "default" | "tesseract" | "custom", 
-        customOCRFunction?: (image: Buffer) => Promise<string>, 
-        saveWasm?: boolean 
+    public constructor(data: {
+        username: string,
+        password: string,
+        preferredOCRMethod?: "default" | "tesseract" | "custom",
+        customOCRFunction?: (image: Buffer) => Promise<string>,
+        saveWasm?: boolean
     }) {
         if (!data.username || !data.password) throw new Error("You must define at least a MB account to use with this library!");
 
@@ -207,7 +207,7 @@ export default class MB {
 
     /**
      * Processes captcha image according to the configured OCR method.
-     * 
+     *
      * @private
      * @param {Buffer} image - Captcha image buffer
      * @returns {Promise<string|null>} Recognized captcha text or null if recognition failed
@@ -215,9 +215,11 @@ export default class MB {
     private async recognizeCaptcha(image: Buffer) {
         switch (this.preferredOCRMethod) {
             case "default":
+                // eslint-disable-next-line no-case-declarations
                 const model = new OCRModel();
                 await model.loadModel();
 
+                // eslint-disable-next-line no-case-declarations
                 const modelPredictedCaptcha = await model.predict(image);
 
                 if (modelPredictedCaptcha.length !== 6) return null;
@@ -227,6 +229,7 @@ export default class MB {
             case "custom":
                 if (!this.customOCRFunction) return null;
 
+                // eslint-disable-next-line no-case-declarations
                 const customPredictedCaptcha = await this.customOCRFunction(image);
 
                 if (customPredictedCaptcha.length !== 6) return null;
@@ -237,17 +240,17 @@ export default class MB {
     /**
      * Authenticates with MB Bank API by solving captcha and sending login credentials.
      * Sets the session ID upon successful login.
-     * 
+     *
      * @returns {Promise<LoginResponseData>} Login response from the API
      * @throws {Error} If login fails with specific error code and message
-     * 
+     *
      * @example
      * ```typescript
      * const mb = new MB({
      *   username: '0123456789',
      *   password: 'your_password'
      * });
-     * 
+     *
      * try {
      *   const loginResponse = await mb.login();
      *   console.log('Login successful!');
@@ -263,6 +266,8 @@ export default class MB {
 
         const headers = defaultHeaders as any;
         headers["X-Request-Id"] = rId;
+        headers["Deviceid"] = this.deviceId;
+        headers["Refno"] = rId;
 
         const captchaReq = await this.client.request({
             method: "POST",
@@ -276,7 +281,7 @@ export default class MB {
         });
 
         const captchaRes: CaptchaResponse = await captchaReq.body.json() as CaptchaResponse;
-        let captchaBuffer = Buffer.from(captchaRes.imageString, "base64");
+        const captchaBuffer = Buffer.from(captchaRes.imageString, "base64");
 
         const captchaContent = await this.recognizeCaptcha(captchaBuffer);
 
@@ -331,7 +336,7 @@ export default class MB {
     /**
      * Generates a reference ID required by MB Bank API.
      * The format is "{username}-{timestamp}".
-     * 
+     *
      * @private
      * @returns {string} Reference ID for API requests
      */
@@ -342,7 +347,7 @@ export default class MB {
     /**
      * Makes an authenticated request to MB Bank API.
      * Handles session expiration by automatically re-logging in.
-     * 
+     *
      * @private
      * @param {Object} data - Request parameters
      * @param {string} data.path - API endpoint path
@@ -394,23 +399,23 @@ export default class MB {
 
     /**
      * Retrieves account balance information for all accounts.
-     * 
+     *
      * @returns {Promise<BalanceList|undefined>} Account balance data or undefined if request fails
-     * 
+     *
      * @example
      * ```typescript
      * const mb = new MB({
      *   username: '0123456789',
      *   password: 'your_password'
      * });
-     * 
+     *
      * async function getAccountInfo() {
      *   await mb.login();
      *   const balanceInfo = await mb.getBalance();
-     *   
+     *
      *   if (balanceInfo) {
      *     console.log(`Total balance: ${balanceInfo.totalBalance} ${balanceInfo.currencyEquivalent}`);
-     *     
+     *
      *     // Display each account's details
      *     balanceInfo.balances.forEach(account => {
      *       console.log(`Account: ${account.name} (${account.number})`);
@@ -419,7 +424,7 @@ export default class MB {
      *     });
      *   }
      * }
-     * 
+     *
      * getAccountInfo().catch(console.error);
      * ```
      */
@@ -465,54 +470,54 @@ export default class MB {
 
     /**
      * Retrieves transaction history for a specific account within a date range.
-     * 
+     *
      * @param {Object} data - Request parameters
      * @param {string} data.accountNumber - MB Bank account number to query
      * @param {string} data.fromDate - Start date in format "DD/MM/YYYY" or "D/M/YYYY"
      * @param {string} data.toDate - End date in format "DD/MM/YYYY" or "D/M/YYYY"
      * @returns {Promise<TransactionInfo[]|undefined>} Array of transaction details or undefined if request fails
      * @throws {Error} If date range exceeds 90 days or date format is invalid
-     * 
+     *
      * @example
      * ```typescript
      * const mb = new MB({
      *   username: '0123456789',
      *   password: 'your_password'
      * });
-     * 
+     *
      * async function getLastMonthTransactions() {
      *   await mb.login();
-     *   
+     *
      *   // Get account first
      *   const balanceInfo = await mb.getBalance();
      *   if (!balanceInfo?.balances?.length) {
      *     console.log('No accounts found');
      *     return;
      *   }
-     *   
+     *
      *   const accountNumber = balanceInfo.balances[0].number;
-     *   
+     *
      *   // Get transactions for the last 30 days
      *   const today = new Date();
      *   const lastMonth = new Date();
      *   lastMonth.setDate(today.getDate() - 30);
-     *   
+     *
      *   const fromDate = `${lastMonth.getDate()}/${lastMonth.getMonth() + 1}/${lastMonth.getFullYear()}`;
      *   const toDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
-     *   
+     *
      *   const transactions = await mb.getTransactionsHistory({
      *     accountNumber,
      *     fromDate,
      *     toDate
      *   });
-     *   
+     *
      *   if (transactions) {
      *     console.log(`Found ${transactions.length} transactions`);
-     *     
+     *
      *     transactions.forEach(tx => {
      *       const amount = tx.creditAmount || tx.debitAmount;
      *       const type = tx.creditAmount ? 'CREDIT' : 'DEBIT';
-     *       
+     *
      *       console.log(`${tx.transactionDate} | ${type} | ${amount} ${tx.transactionCurrency}`);
      *       console.log(`Description: ${tx.transactionDesc}`);
      *       if (tx.toAccountName) {
@@ -522,7 +527,7 @@ export default class MB {
      *     });
      *   }
      * }
-     * 
+     *
      * getLastMonthTransactions().catch(console.error);
      * ```
      */

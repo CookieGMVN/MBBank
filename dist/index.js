@@ -52,14 +52,21 @@ function generateDeviceId() {
 }
 __name(generateDeviceId, "generateDeviceId");
 var defaultHeaders = {
-  "Cache-Control": "no-cache",
+  "Cache-Control": "max-age=0",
   "Accept": "application/json, text/plain, */*",
   "Authorization": "Basic RU1CUkVUQUlMV0VCOlNEMjM0ZGZnMzQlI0BGR0AzNHNmc2RmNDU4NDNm",
-  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
   "Origin": "https://online.mbbank.com.vn",
-  "Referer": "https://online.mbbank.com.vn/",
+  "Referer": "https://online.mbbank.com.vn/pl/login?returnUrl=%2F",
   "Content-Type": "application/json; charset=UTF-8",
-  app: "MB_WEB"
+  app: "MB_WEB",
+  "elastic-apm-traceparent": "00-55b950e3fcabc785fa6db4d7deb5ef73-8dbd60b04eda2f34-01",
+  "Sec-Ch-Ua": '"Not.A/Brand";v="8", "Chromium";v="134", "Google Chrome";v="134"',
+  "Sec-Ch-Ua-Mobile": "?0",
+  "Sec-Ch-Ua-Platform": '"Windows"',
+  "Sec-Fetch-Dest": "empty",
+  "Sec-Fetch-Mode": "cors",
+  "Sec-Fetch-Site": "same-origin"
 };
 var defaultTesseractConfig = {
   lang: "eng",
@@ -119,13 +126,9 @@ async function cutBorder({
     const newHeight = originalHeight - 2 * borderWidth;
     const croppedImage = jimpImage.crop(
       borderWidth,
-      // x position (left)
       borderWidth,
-      // y position (top)
       newWidth,
-      // width
       newHeight
-      // height
     );
     return await croppedImage.getBufferAsync(import_jimp.default.MIME_PNG);
   } catch (error) {
@@ -668,80 +671,12 @@ function LoadWasm_default(wasmBytes, requestData, args1) {
 }
 __name(LoadWasm_default, "default");
 
-// src/utils/Tesseract.ts
-var import_node_tesseract_ocr = require("node-tesseract-ocr");
-var TesseractUtils = class {
-  static {
-    __name(this, "TesseractUtils");
-  }
-  /**
-   * Cleans a captcha image to improve OCR recognition accuracy
-   * 
-   * @param {Buffer} image - The raw captcha image buffer
-   * @returns {Promise<Buffer>} A promise that resolves to the cleaned image buffer
-   * 
-   * @example
-   * ```typescript
-   * // Clean captcha image for better OCR recognition
-   * const rawImage = fs.readFileSync('./captcha.png');
-   * const cleanedImage = await TesseractUtils.cleanImage(rawImage);
-   * ```
-   */
-  static async cleanImage(image) {
-    image = await replaceColor({
-      image,
-      target: "#857069",
-      replace: "#ffffff"
-    });
-    image = await replaceColor({
-      image,
-      target: "#ffe4d6",
-      replace: "#ffffff"
-    });
-    image = await cutBorder({
-      image,
-      borderWidth: 1
-    });
-    return image;
-  }
-  /**
-   * Recognizes text from a captcha image using Tesseract OCR
-   * 
-   * @param {Buffer} image - The captcha image buffer to process
-   * @returns {Promise<string|null>} A promise that resolves to the recognized text, or null if recognition failed
-   * 
-   * @example
-   * ```typescript
-   * // Recognize text from a captcha image
-   * const captchaImage = fs.readFileSync('./captcha.png');
-   * const recognizedText = await TesseractUtils.recognizeText(captchaImage);
-   * 
-   * if (recognizedText) {
-   *   console.log('Captcha text:', recognizedText);
-   * } else {
-   *   console.log('Failed to recognize captcha');
-   * }
-   * ```
-   */
-  static async recognizeText(image) {
-    image = await this.cleanImage(image);
-    const captchaContent = await (0, import_node_tesseract_ocr.recognize)(image, defaultTesseractConfig);
-    captchaContent.replaceAll("\n", "");
-    captchaContent.replaceAll(" ", "");
-    captchaContent.slice(0, -1);
-    if (captchaContent.length !== 6 || !/^[a-z0-9]+$/i.test(captchaContent)) {
-      return null;
-    }
-    return captchaContent;
-  }
-};
-
 // src/utils/OCRModel.ts
-var path = __toESM(require("path"));
+var import_fs = require("fs");
 var ort = __toESM(require("onnxruntime-node"));
+var path = __toESM(require("path"));
 var import_sharp = __toESM(require("sharp"));
 var import_undici = require("undici");
-var import_fs = require("fs");
 var dirPath = path.dirname(require.main ? require.main.filename : __filename);
 var OCRModel = class {
   static {
@@ -905,18 +840,86 @@ var OCRModel = class {
   }
 };
 
+// src/utils/Tesseract.ts
+var import_node_tesseract_ocr = require("node-tesseract-ocr");
+var TesseractUtils = class {
+  static {
+    __name(this, "TesseractUtils");
+  }
+  /**
+   * Cleans a captcha image to improve OCR recognition accuracy
+   *
+   * @param {Buffer} image - The raw captcha image buffer
+   * @returns {Promise<Buffer>} A promise that resolves to the cleaned image buffer
+   *
+   * @example
+   * ```typescript
+   * // Clean captcha image for better OCR recognition
+   * const rawImage = fs.readFileSync('./captcha.png');
+   * const cleanedImage = await TesseractUtils.cleanImage(rawImage);
+   * ```
+   */
+  static async cleanImage(image) {
+    image = await replaceColor({
+      image,
+      target: "#857069",
+      replace: "#ffffff"
+    });
+    image = await replaceColor({
+      image,
+      target: "#ffe4d6",
+      replace: "#ffffff"
+    });
+    image = await cutBorder({
+      image,
+      borderWidth: 1
+    });
+    return image;
+  }
+  /**
+   * Recognizes text from a captcha image using Tesseract OCR
+   *
+   * @param {Buffer} image - The captcha image buffer to process
+   * @returns {Promise<string|null>} A promise that resolves to the recognized text, or null if recognition failed
+   *
+   * @example
+   * ```typescript
+   * // Recognize text from a captcha image
+   * const captchaImage = fs.readFileSync('./captcha.png');
+   * const recognizedText = await TesseractUtils.recognizeText(captchaImage);
+   *
+   * if (recognizedText) {
+   *   console.log('Captcha text:', recognizedText);
+   * } else {
+   *   console.log('Failed to recognize captcha');
+   * }
+   * ```
+   */
+  static async recognizeText(image) {
+    image = await this.cleanImage(image);
+    const captchaContent = await (0, import_node_tesseract_ocr.recognize)(image, defaultTesseractConfig);
+    captchaContent.replaceAll("\n", "");
+    captchaContent.replaceAll(" ", "");
+    captchaContent.slice(0, -1);
+    if (captchaContent.length !== 6 || !/^[a-z0-9]+$/i.test(captchaContent)) {
+      return null;
+    }
+    return captchaContent;
+  }
+};
+
 // src/utils/Wasm.ts
-var import_undici2 = require("undici");
 var import_fs2 = require("fs");
+var import_undici2 = require("undici");
 var WasmUtils = class {
   static {
     __name(this, "WasmUtils");
   }
   /**
    * Downloads the WebAssembly binary from MB Bank's website
-   * 
+   *
    * @returns {Promise<Buffer>} A promise that resolves to the WebAssembly binary buffer
-   * 
+   *
    * @example
    * ```typescript
    * const wasmBinary = await WasmUtils.downloadWasm();
@@ -929,15 +932,15 @@ var WasmUtils = class {
   }
   /**
    * Loads WebAssembly binary, either by downloading it or retrieving from disk
-   * 
+   *
    * @param {string} [path] - Optional path to save/load the WebAssembly file
    * @returns {Promise<Buffer>} A promise that resolves to the WebAssembly binary buffer
-   * 
+   *
    * @example
    * ```typescript
    * // Download the WASM file each time
    * const wasmData = await WasmUtils.loadWasm();
-   * 
+   *
    * // Or save/load it from disk for caching
    * const wasmData = await WasmUtils.loadWasm('./cache/main.wasm');
    * ```
@@ -999,12 +1002,12 @@ var MB = class {
   /**
    * Custom OCR function for captcha recognition.
    * Allows implementing your own captcha recognition logic.
-   * 
+   *
    * @private
    * @type {Function|undefined}
    * @param {Buffer} image - The captcha image buffer to be recognized
    * @returns {Promise<string>} Recognized text from the captcha
-   * 
+   *
    * @example
    * ```typescript
    * const mb = new MB({
@@ -1026,7 +1029,7 @@ var MB = class {
    * - "default": Uses the pre-trained OCR model (recommended)
    * - "tesseract": Uses Tesseract OCR engine
    * - "custom": Uses the custom OCR function provided
-   * 
+   *
    * @private
    * @type {"default"|"tesseract"|"custom"}
    * @default "default"
@@ -1035,7 +1038,7 @@ var MB = class {
   /**
    * Whether to save the WASM file to disk.
    * Useful for debugging or caching purposes.
-   * 
+   *
    * @private
    * @type {boolean}
    * @default false
@@ -1043,16 +1046,16 @@ var MB = class {
   saveWasm = false;
   /**
    * Creates a new MB client instance.
-   * 
+   *
    * @param {Object} data - Configuration options
    * @param {string} data.username - MB Bank login username (usually your registered phone number)
    * @param {string} data.password - MB Bank login password
    * @param {"default"|"tesseract"|"custom"} [data.preferredOCRMethod="default"] - OCR method for captcha recognition
    * @param {Function} [data.customOCRFunction] - Custom OCR function (required if preferredOCRMethod is "custom")
    * @param {boolean} [data.saveWasm=false] - Whether to save the WASM file to disk
-   * 
+   *
    * @throws {Error} If username or password is not provided
-   * 
+   *
    * @example
    * ```typescript
    * // Basic usage with default OCR
@@ -1060,14 +1063,14 @@ var MB = class {
    *   username: '0123456789',
    *   password: 'your_password'
    * });
-   * 
+   *
    * // Using Tesseract OCR
    * const mbWithTesseract = new MB({
    *   username: '0123456789',
    *   password: 'your_password',
    *   preferredOCRMethod: 'tesseract'
    * });
-   * 
+   *
    * // Using custom OCR function
    * const mbWithCustomOCR = new MB({
    *   username: '0123456789',
@@ -1090,7 +1093,7 @@ var MB = class {
   }
   /**
    * Processes captcha image according to the configured OCR method.
-   * 
+   *
    * @private
    * @param {Buffer} image - Captcha image buffer
    * @returns {Promise<string|null>} Recognized captcha text or null if recognition failed
@@ -1115,17 +1118,17 @@ var MB = class {
   /**
    * Authenticates with MB Bank API by solving captcha and sending login credentials.
    * Sets the session ID upon successful login.
-   * 
+   *
    * @returns {Promise<LoginResponseData>} Login response from the API
    * @throws {Error} If login fails with specific error code and message
-   * 
+   *
    * @example
    * ```typescript
    * const mb = new MB({
    *   username: '0123456789',
    *   password: 'your_password'
    * });
-   * 
+   *
    * try {
    *   const loginResponse = await mb.login();
    *   console.log('Login successful!');
@@ -1139,6 +1142,8 @@ var MB = class {
     const rId = getTimeNow();
     const headers = defaultHeaders;
     headers["X-Request-Id"] = rId;
+    headers["Deviceid"] = this.deviceId;
+    headers["Refno"] = rId;
     const captchaReq = await this.client.request({
       method: "POST",
       path: "/api/retail-web-internetbankingms/getCaptchaImage",
@@ -1150,7 +1155,7 @@ var MB = class {
       })
     });
     const captchaRes = await captchaReq.body.json();
-    let captchaBuffer = Buffer.from(captchaRes.imageString, "base64");
+    const captchaBuffer = Buffer.from(captchaRes.imageString, "base64");
     const captchaContent = await this.recognizeCaptcha(captchaBuffer);
     if (captchaContent === null) return this.login();
     if (!this.wasmData) {
@@ -1191,7 +1196,7 @@ var MB = class {
   /**
    * Generates a reference ID required by MB Bank API.
    * The format is "{username}-{timestamp}".
-   * 
+   *
    * @private
    * @returns {string} Reference ID for API requests
    */
@@ -1201,7 +1206,7 @@ var MB = class {
   /**
    * Makes an authenticated request to MB Bank API.
    * Handles session expiration by automatically re-logging in.
-   * 
+   *
    * @private
    * @param {Object} data - Request parameters
    * @param {string} data.path - API endpoint path
@@ -1243,23 +1248,23 @@ var MB = class {
   }
   /**
    * Retrieves account balance information for all accounts.
-   * 
+   *
    * @returns {Promise<BalanceList|undefined>} Account balance data or undefined if request fails
-   * 
+   *
    * @example
    * ```typescript
    * const mb = new MB({
    *   username: '0123456789',
    *   password: 'your_password'
    * });
-   * 
+   *
    * async function getAccountInfo() {
    *   await mb.login();
    *   const balanceInfo = await mb.getBalance();
-   *   
+   *
    *   if (balanceInfo) {
    *     console.log(`Total balance: ${balanceInfo.totalBalance} ${balanceInfo.currencyEquivalent}`);
-   *     
+   *
    *     // Display each account's details
    *     balanceInfo.balances.forEach(account => {
    *       console.log(`Account: ${account.name} (${account.number})`);
@@ -1268,7 +1273,7 @@ var MB = class {
    *     });
    *   }
    * }
-   * 
+   *
    * getAccountInfo().catch(console.error);
    * ```
    */
@@ -1304,54 +1309,54 @@ var MB = class {
   }
   /**
    * Retrieves transaction history for a specific account within a date range.
-   * 
+   *
    * @param {Object} data - Request parameters
    * @param {string} data.accountNumber - MB Bank account number to query
    * @param {string} data.fromDate - Start date in format "DD/MM/YYYY" or "D/M/YYYY"
    * @param {string} data.toDate - End date in format "DD/MM/YYYY" or "D/M/YYYY"
    * @returns {Promise<TransactionInfo[]|undefined>} Array of transaction details or undefined if request fails
    * @throws {Error} If date range exceeds 90 days or date format is invalid
-   * 
+   *
    * @example
    * ```typescript
    * const mb = new MB({
    *   username: '0123456789',
    *   password: 'your_password'
    * });
-   * 
+   *
    * async function getLastMonthTransactions() {
    *   await mb.login();
-   *   
+   *
    *   // Get account first
    *   const balanceInfo = await mb.getBalance();
    *   if (!balanceInfo?.balances?.length) {
    *     console.log('No accounts found');
    *     return;
    *   }
-   *   
+   *
    *   const accountNumber = balanceInfo.balances[0].number;
-   *   
+   *
    *   // Get transactions for the last 30 days
    *   const today = new Date();
    *   const lastMonth = new Date();
    *   lastMonth.setDate(today.getDate() - 30);
-   *   
+   *
    *   const fromDate = `${lastMonth.getDate()}/${lastMonth.getMonth() + 1}/${lastMonth.getFullYear()}`;
    *   const toDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
-   *   
+   *
    *   const transactions = await mb.getTransactionsHistory({
    *     accountNumber,
    *     fromDate,
    *     toDate
    *   });
-   *   
+   *
    *   if (transactions) {
    *     console.log(`Found ${transactions.length} transactions`);
-   *     
+   *
    *     transactions.forEach(tx => {
    *       const amount = tx.creditAmount || tx.debitAmount;
    *       const type = tx.creditAmount ? 'CREDIT' : 'DEBIT';
-   *       
+   *
    *       console.log(`${tx.transactionDate} | ${type} | ${amount} ${tx.transactionCurrency}`);
    *       console.log(`Description: ${tx.transactionDesc}`);
    *       if (tx.toAccountName) {
@@ -1361,7 +1366,7 @@ var MB = class {
    *     });
    *   }
    * }
-   * 
+   *
    * getLastMonthTransactions().catch(console.error);
    * ```
    */

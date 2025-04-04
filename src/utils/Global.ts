@@ -46,14 +46,21 @@ export function generateDeviceId() {
  * @type {Object}
  */
 export const defaultHeaders = {
-    'Cache-Control': 'no-cache',
+    'Cache-Control': 'max-age=0',
     'Accept': 'application/json, text/plain, */*',
     'Authorization': 'Basic RU1CUkVUQUlMV0VCOlNEMjM0ZGZnMzQlI0BGR0AzNHNmc2RmNDU4NDNm',
-    'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+    'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
     "Origin": "https://online.mbbank.com.vn",
-    "Referer": "https://online.mbbank.com.vn/",
+    "Referer": "https://online.mbbank.com.vn/pl/login?returnUrl=%2F",
     "Content-Type": "application/json; charset=UTF-8",
     app: "MB_WEB",
+    "elastic-apm-traceparent": "00-55b950e3fcabc785fa6db4d7deb5ef73-8dbd60b04eda2f34-01",
+    "Sec-Ch-Ua": '"Not.A/Brand";v="8", "Chromium";v="134", "Google Chrome";v="134"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
 };
 
 /**
@@ -86,7 +93,7 @@ export async function replaceColor({
     image,
     target,
     replace,
-    tolerance = 0
+    tolerance = 0,
 }: {
     image: Buffer,
     target: string,
@@ -115,7 +122,7 @@ export async function replaceColor({
         const maxDiff = 255 * Math.min(tolerance / 100, 1);
 
         // Process each pixel
-        jimpImage.scan(0, 0, jimpImage.getWidth(), jimpImage.getHeight(), function (x, y, idx) {
+        jimpImage.scan(0, 0, jimpImage.getWidth(), jimpImage.getHeight(), function(x, y, idx) {
             // Get current pixel RGB values
             const r = this.bitmap.data[idx + 0];
             const g = this.bitmap.data[idx + 1];
@@ -126,7 +133,7 @@ export async function replaceColor({
             const colorDiff = Math.sqrt(
                 Math.pow(r - targetR, 2) +
                 Math.pow(g - targetG, 2) +
-                Math.pow(b - targetB, 2)
+                Math.pow(b - targetB, 2),
             );
 
             // Replace the color if within tolerance
@@ -156,7 +163,7 @@ export async function replaceColor({
  */
 export async function cutBorder({
     image,
-    borderWidth = 5
+    borderWidth = 5,
 }: {
     image: Buffer,
     borderWidth?: number
@@ -180,10 +187,10 @@ export async function cutBorder({
 
         // Crop the image (removing the border from all sides)
         const croppedImage = jimpImage.crop(
-            borderWidth,    // x position (left)
-            borderWidth,    // y position (top)
-            newWidth,       // width
-            newHeight       // height
+            borderWidth,
+            borderWidth,
+            newWidth,
+            newHeight,
         );
 
         // Return the modified image as a buffer

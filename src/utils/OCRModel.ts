@@ -1,8 +1,32 @@
-import * as path from 'path';
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 CookieGMVN and contributors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+import { createWriteStream, existsSync } from 'fs';
 import * as ort from 'onnxruntime-node';
+import * as path from 'path';
 import sharp from 'sharp';
 import { request } from 'undici';
-import { createWriteStream, existsSync } from 'fs';
 
 const dirPath = path.dirname(require.main ? require.main.filename : __filename);
 
@@ -17,14 +41,14 @@ export default class OCRModel {
      * @type {string[]}
      */
     private chars: string[];
-    
+
     /**
      * Path to the ONNX model file
      * @private
      * @type {string}
      */
     private modelPath: string;
-    
+
     /**
      * ONNX inference session
      * @private
@@ -124,8 +148,8 @@ export default class OCRModel {
             const model = await request("https://github.com/thedtvn/mbbank-capcha-ocr/raw/refs/heads/master/mb_capcha_ocr/model.onnx", {
                 maxRedirections: 10,
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                },
             });
 
             // Create a write stream
