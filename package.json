@@ -1,6 +1,6 @@
 {
   "name": "mbbank",
-  "version": "1.8.2",
+  "version": "1.8.3",
   "description": "An promise-based unofficial API wrapper for Vietnam Military Commercial Joint Stock Bank (MBBank, MB)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -25,6 +25,8 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { request } from "undici";
 
+import { defaultHeaders } from "./Global";
+
 /**
  * Utility class for managing WebAssembly binary files
  */
@@ -41,7 +43,9 @@ export default class WasmUtils {
      * ```
      */
     public static async downloadWasm(): Promise<Buffer> {
-        const wasm = await request("https://online.mbbank.com.vn/assets/wasm/main.wasm");
+        const wasm = await request("https://online.mbbank.com.vn/assets/wasm/main.wasm", {
+            headers: defaultHeaders,
+        });
 
         return Buffer.from(await wasm.body.arrayBuffer());
     }
