@@ -927,7 +927,9 @@ var WasmUtils = class {
    * ```
    */
   static async downloadWasm() {
-    const wasm = await (0, import_undici2.request)("https://online.mbbank.com.vn/assets/wasm/main.wasm");
+    const wasm = await (0, import_undici2.request)("https://online.mbbank.com.vn/assets/wasm/main.wasm", {
+      headers: defaultHeaders
+    });
     return Buffer.from(await wasm.body.arrayBuffer());
   }
   /**
