@@ -18,6 +18,13 @@ Nếu bạn chọn cách giải captcha là `tesseract`, hãy đảm bảo rằn
 
 Thư viện này được dựa trên dự án [MBBank](https://pypi.org/project/mbbank-lib/) của The DT.
 
+## Cài đặt
+Hãy chạy lệnh dưới đây:
+
+```bash
+npm i mbbank
+```
+
 ## Bắt đầu
 
 Khởi tạo đối tượng `MB`:
