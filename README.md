@@ -18,6 +18,13 @@ This library is to help you to interact with MB's API in a easier way and you ca
 
 This library is based/inspired from Python lib [MBBank](https://pypi.org/project/mbbank-lib/) by [The DT](https://github.com/thedtvn).
 
+## Installation
+Simply run this command:
+
+```bash
+npm i mbbank
+```
+
 ## Getting Started
 
 Initialize a MB client:

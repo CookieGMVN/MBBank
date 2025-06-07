@@ -563,7 +563,7 @@ export default class MB {
                 refNo: transaction.refNo,
                 toAccountName: transaction.benAccountName,
                 toBank: transaction.bankName,
-                toAccountNumber: transaction.benAccountName,
+                toAccountNumber: transaction.benAccountNo,
                 type: transaction.transactionType,
             };
 
