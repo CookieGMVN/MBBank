@@ -115,7 +115,7 @@ new MB({
 
 ## OCR Model Credit
 
-The dataset is collected by me (and it's open on [Kaggle](https://www.kaggle.com/datasets/cookiegmvn/mbbank-captcha-images)), but the OCR model is trained by [The DT](https://github.com/thedtvn). Full model and the training code can be found at [his GitHub repository](https://github.com/thedtvn/mbbank-capcha-ocr)
+The dataset is collected by me (and it's open on [Kaggle](https://www.kaggle.com/datasets/cookiegmvn/mbbank-captcha-images)), but the OCR model is trained by [The DT](https://github.com/thedtvn). Full model and the training code can be found at [his GitHub repository](https://github.com/thedtvn/mbbank-capcha-ocr).
 
 ## Donations
 
