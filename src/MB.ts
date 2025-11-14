@@ -271,7 +271,7 @@ export default class MB {
 
         const captchaReq = await this.client.request({
             method: "POST",
-            path: "/api/retail-web-internetbankingms/getCaptchaImage",
+            path: "/api/retail-internetbankingms/getCaptchaImage",
             headers,
             body: JSON.stringify({
                 "sessionId": "",
