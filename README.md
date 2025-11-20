@@ -119,7 +119,9 @@ The dataset is collected by me (and it's open on [Kaggle](https://www.kaggle.com
 
 ## Donations
 
-If you think this is helpful for you, you can give me a cup of coffee via bank account: 0974163549 - MB - TRAN DINH TUYEN or MoMo wallet: 0888929537
+If you think this is helpful for you, you can give me a cup of coffee via bank account: 141482 - MB - Truong Quang Phong 
+
+## Created by [Tran Dinh Tuyen](https://github.com/CookieGMVN/MBBank)
 
 ## License
 
