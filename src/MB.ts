@@ -429,7 +429,7 @@ export default class MB {
      * ```
      */
     public async getBalance(): Promise<BalanceList | undefined> {
-        const balanceData = await this.mbRequest({ path: "/api/retail-web-accountms/getBalance" });
+        const balanceData = await this.mbRequest({ path: "/api/retail-accountms/accountms/getBalance" });
 
         if (!balanceData) return;
 
