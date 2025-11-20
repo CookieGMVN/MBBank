@@ -29,11 +29,11 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/index.ts
-var src_exports = {};
-__export(src_exports, {
+var index_exports = {};
+__export(index_exports, {
   MB: () => MB
 });
-module.exports = __toCommonJS(src_exports);
+module.exports = __toCommonJS(index_exports);
 
 // src/MB.ts
 var import_node_crypto = require("crypto");
@@ -1148,7 +1148,7 @@ var MB = class {
     headers["Refno"] = rId;
     const captchaReq = await this.client.request({
       method: "POST",
-      path: "/api/retail-web-internetbankingms/getCaptchaImage",
+      path: "/api/retail-internetbankingms/getCaptchaImage",
       headers,
       body: JSON.stringify({
         "sessionId": "",
@@ -1280,7 +1280,7 @@ var MB = class {
    * ```
    */
   async getBalance() {
-    const balanceData = await this.mbRequest({ path: "/api/retail-web-accountms/getBalance" });
+    const balanceData = await this.mbRequest({ path: "/api/retail-accountms/accountms/getBalance" });
     if (!balanceData) return;
     const balance = {
       totalBalance: balanceData.totalBalanceEquivalent,

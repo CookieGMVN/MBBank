@@ -1,6 +1,6 @@
 {
-  "name": "mbbank",
-  "version": "1.8.7",
+  "name": "mbbank-luisepog",
+  "version": "1.0.0",
   "description": "An promise-based unofficial API wrapper for Vietnam Military Commercial Joint Stock Bank (MBBank, MB)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,23 +9,30 @@
     "test-github": "ts-node src/Test.ts",
     "test": "nodemon src/Test.ts -w src",
     "doc": "typedoc",
-    "test-local": "nodemon src/Test.local.ts"
+    "test-local": "nodemon src/Test.local.ts",
+    "prepublishOnly": "npm run build"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CookieGMVN/MBBank.git"
+    "url": "git+https://github.com/LuisePog/MBBank.git"
   },
   "keywords": [
     "mbbank",
     "mb",
     "bank"
   ],
-  "author": "CookieGMVN",
+  "author": "LuisePog",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/CookieGMVN/MBBank/issues"
+    "url": "https://github.com/LuisePog/MBBank/issues"
   },
-  "funding": "https://nhantien.momo.vn/0888929537",
+  "funding": "https://nhantien.momo.vn/0826703054",
   "homepage": "https://mb-bank.vercel.app",
   "dependencies": {
     "jimp": "^0.22.10",
