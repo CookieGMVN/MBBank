@@ -25,7 +25,7 @@
 <ul class="tsd-hierarchy">
 <li><span class="target">default</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in utils/Wasm.ts:7</li></ul></aside>
+<li>Defined in <a href="https://github.com/CookieGMVN/MBBank/blob/2ae17ac/src/utils/Wasm.ts#L33">utils/Wasm.ts:33</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -60,11 +60,11 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type ">Buffer</span><span class="tsd-signature-symbol">&gt;</span></h4><p>A promise that resolves to the WebAssembly binary buffer</p>
 
 <div class="tsd-comment tsd-typography">
-<h4>Example</h4><pre><code class="language-typescript"><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-7">wasmBinary</span><span class="hl-1"> = </span><span class="hl-8">await</span><span class="hl-1"> </span><span class="hl-3">WasmUtils</span><span class="hl-1">.</span><span class="hl-2">downloadWasm</span><span class="hl-1">();</span><br/><span class="hl-5">// Use the WebAssembly binary for encryption</span>
+<h4>Example</h4><pre><code class="language-typescript"><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-7">wasmBinary</span><span class="hl-1"> = </span><span class="hl-8">await</span><span class="hl-1"> </span><span class="hl-4">WasmUtils</span><span class="hl-1">.</span><span class="hl-0">downloadWasm</span><span class="hl-1">();</span><br/><span class="hl-5">// Use the WebAssembly binary for encryption</span>
 </code><button>Copy</button></pre>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in utils/Wasm.ts:19</li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/CookieGMVN/MBBank/blob/2ae17ac/src/utils/Wasm.ts#L45">utils/Wasm.ts:45</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="loadWasm" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagStatic">Static</code> <span>load<wbr/>Wasm</span><a href="#loadWasm" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -83,11 +83,11 @@
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type ">Buffer</span><span class="tsd-signature-symbol">&gt;</span></h4><p>A promise that resolves to the WebAssembly binary buffer</p>
 
 <div class="tsd-comment tsd-typography">
-<h4>Example</h4><pre><code class="language-typescript"><span class="hl-5">// Download the WASM file each time</span><br/><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-7">wasmData</span><span class="hl-1"> = </span><span class="hl-8">await</span><span class="hl-1"> </span><span class="hl-3">WasmUtils</span><span class="hl-1">.</span><span class="hl-2">loadWasm</span><span class="hl-1">();</span><br/><br/><span class="hl-5">// Or save/load it from disk for caching</span><br/><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-7">wasmData</span><span class="hl-1"> = </span><span class="hl-8">await</span><span class="hl-1"> </span><span class="hl-3">WasmUtils</span><span class="hl-1">.</span><span class="hl-2">loadWasm</span><span class="hl-1">(</span><span class="hl-4">&#39;./cache/main.wasm&#39;</span><span class="hl-1">);</span>
+<h4>Example</h4><pre><code class="language-typescript"><span class="hl-5">// Download the WASM file each time</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-7">wasmData</span><span class="hl-1"> = </span><span class="hl-8">await</span><span class="hl-1"> </span><span class="hl-4">WasmUtils</span><span class="hl-1">.</span><span class="hl-0">loadWasm</span><span class="hl-1">();</span><br/><br/><span class="hl-5">// Or save/load it from disk for caching</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-7">wasmData</span><span class="hl-1"> = </span><span class="hl-8">await</span><span class="hl-1"> </span><span class="hl-4">WasmUtils</span><span class="hl-1">.</span><span class="hl-0">loadWasm</span><span class="hl-1">(</span><span class="hl-2">&#39;./cache/main.wasm&#39;</span><span class="hl-1">);</span>
 </code><button>Copy</button></pre>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in utils/Wasm.ts:40</li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/CookieGMVN/MBBank/blob/2ae17ac/src/utils/Wasm.ts#L68">utils/Wasm.ts:68</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
