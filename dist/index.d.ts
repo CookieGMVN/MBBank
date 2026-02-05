@@ -451,6 +451,14 @@ declare class MB {
      */
     private recognizeCaptcha;
     /**
+     * Since version 1.8.7, MB Bank requires biometric verification for transactions.
+     * This function will checks for biometric verification requirement and return if you need to complete biometric verification.
+     * This function should be called before performing any transaction-related operations.
+     * @private
+     * @returns {Promise<boolean>}
+     */
+    private verifyBiometricTransaction;
+    /**
      * Authenticates with MB Bank API by solving captcha and sending login credentials.
      * Sets the session ID upon successful login.
      *

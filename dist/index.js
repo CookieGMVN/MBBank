@@ -1118,6 +1118,18 @@ var MB = class {
     }
   }
   /**
+   * Since version 1.8.7, MB Bank requires biometric verification for transactions.
+   * This function will checks for biometric verification requirement and return if you need to complete biometric verification.
+   * This function should be called before performing any transaction-related operations.
+   * @private
+   * @returns {Promise<boolean>}
+   */
+  async verifyBiometricTransaction() {
+    const biometricStatus = await this.mbRequest({ path: "/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction" });
+    if (!biometricStatus) return false;
+    return biometricStatus.result.responseCode == "00" && biometricStatus.result.ok;
+  }
+  /**
    * Authenticates with MB Bank API by solving captcha and sending login credentials.
    * Sets the session ID upon successful login.
    *
@@ -1148,7 +1160,7 @@ var MB = class {
     headers["Refno"] = rId;
     const captchaReq = await this.client.request({
       method: "POST",
-      path: "/api/retail-web-internetbankingms/getCaptchaImage",
+      path: "/api/retail-internetbankingms/getCaptchaImage",
       headers,
       body: JSON.stringify({
         "sessionId": "",
@@ -1186,6 +1198,10 @@ var MB = class {
     }
     if (loginRes.result.ok) {
       this.sessionId = loginRes.sessionId;
+      const biometricVerified = await this.verifyBiometricTransaction();
+      if (!biometricVerified) {
+        throw new Error("Biometric verification required for transactions. Please complete biometric verification in the MB Bank mobile app.");
+      }
       return loginRes;
     } else if (loginRes.result.responseCode === "GW283") {
       return this.login();
@@ -1280,7 +1296,7 @@ var MB = class {
    * ```
    */
   async getBalance() {
-    const balanceData = await this.mbRequest({ path: "/api/retail-web-accountms/getBalance" });
+    const balanceData = await this.mbRequest({ path: "/api/retail-accountms/accountms/getBalance" });
     if (!balanceData) return;
     const balance = {
       totalBalance: balanceData.totalBalanceEquivalent,
